@@ -101,8 +101,10 @@ export default function Home() {
     ]
   );
 
+  // inject the incident into this function (speed is reduced?)
+
   // Preplanned
-  const planPreplanned = () => {
+  const planPreplanned = (speed) => {
     const remaining = [...customers];
     const trips = [];
     let totalKm = 0;
@@ -145,6 +147,7 @@ export default function Home() {
     let totalKm = 0;
     let totalH = 0;
 
+	// visualize the change 
     while (remaining.length > 0) {
       let trip = ["Depot"];
       let load = 0;
