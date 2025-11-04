@@ -407,6 +407,26 @@ export default function Home() {
 		return { path, totalKm, totalTimeHrs, totalTimeMins };
 	};
 
+	const simulateTrip1 = () => {
+		alert(`Manual from ${manualPlanPath?.[0]?.label} -> ${manualPlanPath?.[1]?.label} and Hurestic is from ${optimizedPlanPath?.[0]?.label} -> ${optimizedPlanPath?.[1]?.label}`);
+	};
+
+	const simulateTrip2 = () => {
+		alert(`Manual from ${manualPlanPath?.[1]?.label} -> ${manualPlanPath?.[2]?.label} and Hurestic is from ${optimizedPlanPath?.[1]?.label} -> ${optimizedPlanPath?.[2]?.label}`);
+	};
+
+	const simulateTrip3 = () => {
+		alert(`Manual from ${manualPlanPath?.[2]?.label} -> ${manualPlanPath?.[3]?.label} and Hurestic is from ${optimizedPlanPath?.[2]?.label} -> ${optimizedPlanPath?.[3]?.label}`);
+	};
+
+	const simulateTrip4 = () => {
+		alert(`Manual from ${manualPlanPath?.[3]?.label} -> ${manualPlanPath?.[4]?.label} and Hurestic is from ${optimizedPlanPath?.[3]?.label} -> ${optimizedPlanPath?.[4]?.label}`);
+	};
+
+	const simulateTrip5 = () => {
+		alert(`Manual from ${manualPlanPath?.[4]?.label} -> ${manualPlanPath?.[5]?.label} and Hurestic is from ${optimizedPlanPath?.[4]?.label} -> ${optimizedPlanPath?.[5]?.label}`);
+	};
+
 	return isLoaded ? (
 		<div className="flex items-top gap-2 p-5">
 
@@ -470,29 +490,29 @@ export default function Home() {
 				</div>
 
 				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5"> 3:Simulation with Reduced Speed</div>
+					<div className="text-2xl font-bold pb-5"> 3:Simulation with Reduced Speed (In Progress)</div>
 					<div className="flex justify-end pt-2">
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
-							Start Trip 1
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip1}>
+							Simulate Trip 1
 						</button>
 					</div>	
 					<div className="flex justify-end pt-2">
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
-							Start Trip 2
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip2}>
+							Simulate Trip 2
 						</button>
 					</div>	
 					<div className="flex justify-end pt-2">
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
-							Start Trip 3
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip3}>
+							Simulate Trip 3
 						</button>
 					</div>	
 					<div className="flex justify-end pt-2">
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
-							Start Trip 4
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip4}>
+							Simulate Trip 4
 						</button>
 					</div>
 					<div className="flex justify-end pt-2">
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip5}>
 							Return to Depot
 						</button>
 					</div>																									
