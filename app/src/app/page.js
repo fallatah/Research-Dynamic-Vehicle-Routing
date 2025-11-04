@@ -420,14 +420,14 @@ export default function Home() {
 					{renderDestinationInput("C", "Destination C")}
 					{renderDestinationInput("D", "Destination D")}
 					<div className="flex justify-end pt-2">
-						<button onClick={generateSampleData} className="bg-blue-600 text-white px-4 py-2 rounded">
+						<button onClick={generateSampleData} className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
 							Generate Sample
 						</button>
 					</div>
 				</div>
 
 				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5">Manual Planning (Anticipated)</div>
+					<div className="text-2xl font-bold pb-5">1: Manual Planning (Anticipated)</div>
 					{renderManualPlanningInput(0, "Trip 1")}
 					{renderManualPlanningInput(1, "Trip 2")}
 					{renderManualPlanningInput(2, "Trip 3")}
@@ -436,32 +436,67 @@ export default function Home() {
 						{(manualPlanDistance && manualPlanTime) ? `Distance is (${manualPlanDistance} km) and Time is (${manualPlanTime} Minutes)` : ""}
 					</div>
 					<div className="flex justify-end pt-2">
-						<button onClick={planManually} className="bg-green-600 text-white px-4 py-2 rounded">
-							Option 1: Plan Manually
+						<button onClick={planManually} className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+							Plan Manually
 						</button>
 					</div>
 				</div>
 
 				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5">Optimized Planning</div>
-					<div className="flex pt-2">
-						{(optimizedPlanDistance && optimizedPlanTime) ? `Distance is (${optimizedPlanDistance} km) and Time is (${optimizedPlanTime} Minutes)` : "Click on plan to design your route"}
-					</div>
+					<div className="text-2xl font-bold pb-5">2: Optimized Planning</div>
 					<div className="pt-2">
 						{(!optimizedPlanPath) ? null : optimizedPlanPath?.map((destination, key) => {
 							return (
-								<div key={key}>
-									Trip {key + 1}: {destination?.label}
+								<div key={key} className="flex items-center gap-2 pb-2">
+									<div className="w-32 whitespace-nowrap">Trip {key + 1}:</div>
+									<input
+										type="text"
+										className="bg-gray-300 rounded p-2 border cursor-not-allowed grow"
+										value={destination?.label?.charAt(0).toUpperCase() + destination?.label?.slice(1)?.toLowerCase()}
+										disabled={true}
+									/>
 								</div>
 							)
 						})}
 					</div>
+					<div className="flex pt-2">
+						{(optimizedPlanDistance && optimizedPlanTime) ? `Distance is (${optimizedPlanDistance} km) and Time is (${optimizedPlanTime} Minutes)` : "Click on plan to design your route"}
+					</div>					
 					<div className="flex justify-end pt-2">
-						<button onClick={planWithOptimization} className="bg-green-600 text-white px-4 py-2 rounded">
-							Option 2: Plan with Optimization
+						<button onClick={planWithOptimization} className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+							Plan with Optimization
 						</button>
 					</div>
 				</div>
+
+				<div className="pb-20">
+					<div className="text-2xl font-bold pb-5"> 3:Simulation with Reduced Speed</div>
+					<div className="flex justify-end pt-2">
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+							Start Trip 1
+						</button>
+					</div>	
+					<div className="flex justify-end pt-2">
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+							Start Trip 2
+						</button>
+					</div>	
+					<div className="flex justify-end pt-2">
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+							Start Trip 3
+						</button>
+					</div>	
+					<div className="flex justify-end pt-2">
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+							Start Trip 4
+						</button>
+					</div>
+					<div className="flex justify-end pt-2">
+						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
+							Return to Depot
+						</button>
+					</div>																									
+				</div>				
 			</div>
 
 			<div className="grow" />
