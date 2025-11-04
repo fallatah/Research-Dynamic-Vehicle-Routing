@@ -30,9 +30,10 @@ export default function Home() {
 	const { isLoaded } = useJsApiLoader(
     {
         id:"google-map-view",
-        googleMapsApiKey: "SOMEKEY"
+        googleMapsApiKey: `${process.env.NEXT_PUBLIC_MAP_API_KEY}`
     });
 
+	console.log("NEXT_PUBLIC_MAP_API_KEY", process.env.NEXT_PUBLIC_MAP_API_KEY)
 	const mapOptions = {};	
 
 
