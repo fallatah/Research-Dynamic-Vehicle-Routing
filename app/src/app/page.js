@@ -193,7 +193,7 @@ export default function Home() {
 		handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
 	};
 
-	const planManually = () => {
+	const planManually = () => { 
 
 		let points = [];
 
@@ -284,17 +284,17 @@ export default function Home() {
 
 	const calculatePathOptimized = (origin, destinations) => {
 
-		// inline distance in km using Haversine
+			// inline distance in km using Haversine
 		const distanceKm = (a, b) => {
-			const R = 6371; //6371 km is Earth’s radius.
+			const R = 6371;
 			const toRad = x => (x * Math.PI) / 180;
 			const dLat = toRad(Number(b.lat) - Number(a.lat));
 			const dLon = toRad(Number(b.long) - Number(a.long));
 			const la1 = toRad(Number(a.lat));
 			const la2 = toRad(Number(b.lat));
 			const h =
-				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-				Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+				Math.sin(dLat / 2) ** 2 +
+				Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
 			return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 		};
 
@@ -302,31 +302,21 @@ export default function Home() {
 			return { path: [origin, ...(destinations || [])], totalKm: 0 };
 		}
 
-		const unvisited = destinations.slice();
-		const path = [origin];
-		let current = origin;
+		// Ensure origin has a label
+		const labeledOrigin = { ...origin, label: "origin" };
+
+		// Build full route (start + all destinations + return to origin)
+		const fullRoute = [labeledOrigin, ...destinations, labeledOrigin];
 		let totalKm = 0;
 
-		while (unvisited.length) {
-			let bestIdx = 0;
-			let bestDist = Infinity;
-
-			for (let i = 0; i < unvisited.length; i++) {
-				const d = unvisited[i];
-				const dist = distanceKm(current, d);
-				if (dist < bestDist) {
-					bestDist = dist;
-					bestIdx = i;
-				}
-			}
-
-			const next = unvisited.splice(bestIdx, 1)[0];
-			totalKm += bestDist;
-			path.push(next);
-			current = next;
+		for (let i = 0; i < fullRoute.length - 1; i++) {
+			totalKm += distanceKm(fullRoute[i], fullRoute[i + 1]);
 		}
 
-		return { path, totalKm };
+		const totalTimeHrs = speed > 0 ? totalKm / speed : 0;
+  		const totalTimeMins = totalTimeHrs * 60;
+
+		return { path: fullRoute, totalKm:totalKm, time:totalTimeMins };
 	}
 
 	return isLoaded ? (
