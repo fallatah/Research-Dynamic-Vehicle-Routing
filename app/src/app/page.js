@@ -491,27 +491,52 @@ export default function Home() {
 
 				<div className="pb-20">
 					<div className="text-2xl font-bold pb-5"> 3:Simulation with Reduced Speed (In Progress)</div>
-					<div className="flex justify-end pt-2">
+					<div className="flex justify-end pt-2 gap-2">
+						<input
+							type="text"
+							placeholder="Speed"
+							className="bg-white rounded p-2 border"
+						/>
 						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip1}>
 							Simulate Trip 1
 						</button>
 					</div>	
-					<div className="flex justify-end pt-2">
+					<div className="flex justify-end pt-2 gap-2">
+						<input
+							type="text"
+							placeholder="Speed"
+							className="bg-white rounded p-2 border"
+						/>
 						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip2}>
 							Simulate Trip 2
 						</button>
 					</div>	
-					<div className="flex justify-end pt-2">
+					<div className="flex justify-end pt-2 gap-2">
+						<input
+							type="text"
+							placeholder="Speed"
+							className="bg-white rounded p-2 border"
+						/>
 						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip3}>
 							Simulate Trip 3
 						</button>
 					</div>	
-					<div className="flex justify-end pt-2">
+					<div className="flex justify-end pt-2 gap-2">
+						<input
+							type="text"
+							placeholder="Speed"
+							className="bg-white rounded p-2 border"
+						/>
 						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip4}>
 							Simulate Trip 4
 						</button>
 					</div>
-					<div className="flex justify-end pt-2">
+					<div className="flex justify-end pt-2 gap-2">
+						<input
+							type="text"
+							placeholder="Speed"
+							className="bg-white rounded p-2 border"
+						/>
 						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip5}>
 							Return to Depot
 						</button>
