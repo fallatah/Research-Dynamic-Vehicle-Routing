@@ -419,6 +419,10 @@ export default function Home() {
 		}
 	};
 
+	const simulateEndTrip = () =>{
+			alert(`🚙 Manual ran ${0}km and took ${0} minutes\n🚗 Heuristic  ran ${0}km and took ${0} minutes`);
+	};
+
 	return isLoaded ? (
 		<div className="flex items-top gap-2 p-5">
 
@@ -492,7 +496,7 @@ export default function Home() {
 							onChange={e => handleSpeedChange(e.target.value)}
 						/>
 						<div className="p-3">km</div>
-						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(1)}>
+						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(1)}>
 							Simulate Trip 1
 						</button>
 					</div>	
@@ -505,7 +509,7 @@ export default function Home() {
 							onChange={e => handleSpeedChange(e.target.value)}
 						/>
 						<div className="p-3">km</div>
-						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(2)}>
+						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(2)}>
 							Simulate Trip 2
 						</button>
 					</div>	
@@ -518,7 +522,7 @@ export default function Home() {
 							onChange={e => handleSpeedChange(e.target.value)}
 						/>
 						<div className="p-3">km</div>
-						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(3)}>
+						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(3)}>
 							Simulate Trip 3
 						</button>
 					</div>	
@@ -531,7 +535,7 @@ export default function Home() {
 							onChange={e => handleSpeedChange(e.target.value)}
 						/>
 						<div className="p-3">km</div>
-						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(4)}>
+						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(4)}>
 							Simulate Trip 4
 						</button>
 					</div>
@@ -544,10 +548,15 @@ export default function Home() {
 							onChange={e => handleSpeedChange(e.target.value)}
 						/>
 						<div className="p-3">km</div>
-						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(5)}>
+						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(5)}>
 							Return to Depot
 						</button>
-					</div>																									
+					</div>		
+					<div className="flex justify-end pt-2 gap-2">
+						<button className="bg-indigo-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={simulateEndTrip}>
+							Show Report
+						</button>
+					</div>																								
 				</div>				
 			</div>
 
