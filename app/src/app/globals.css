@@ -10,3 +10,43 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+/* GOOGLE MAP */
+.gm-style-cc, .gm-style a[href^="https://maps.google.com/maps"]
+{
+    display: none !important;
+}
+
+
+.gm-style iframe + div
+{
+    border:none!important; 
+}
+.gm-body
+{
+    color: #ffffff;
+    cursor: pointer;
+}
+.gm-ui-hover-effect
+{
+    display: none !important;
+}
+.gm-style .gm-style-iw-c, .gm-style-iw, .gm-style-iw-c
+{
+    padding:0px !important;
+    margin:0px !important;
+    background-color: #eb4034;
+    -moz-border-radius: 1000px;
+    -webkit-border-radius: 1000px;
+    border-radius: 1000px;
+    -khtml-border-radius: 1000px;
+}
+.gm-style-iw-d
+{
+    overflow: unset !important;
+}
+.gm-style-iw-tc, .gm-style-iw-chr
+{
+  display: none !important;
+}

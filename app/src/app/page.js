@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 
 export default function Home() {
 
@@ -33,9 +33,26 @@ export default function Home() {
         googleMapsApiKey: `${process.env.NEXT_PUBLIC_MAP_API_KEY}`
     });
 
-	console.log("NEXT_PUBLIC_MAP_API_KEY", process.env.NEXT_PUBLIC_MAP_API_KEY)
-	const mapOptions = {};	
+	const mapOptions = {
+		zoomControl: false,
+		mapTypeControl: false,
+		scaleControl: false,
+		streetViewControl: false,
+		rotateControl: false,
+		fullscreenControl: false,
+		clickableIcons: false	
+	};	
 
+	const infoOptions =
+    {
+        enableEventPropagation: true,
+        disableAutoPan:true,
+        boxStyle: {
+            content: "",
+            minWidth: "30px"
+        },
+        closeBoxURL: ""
+    };
 
 	const renderDepot = () => (
 		<div className="flex items-center gap-2 pb-2">
@@ -277,14 +294,34 @@ export default function Home() {
 			<div className="w-fit">
 				<div className="pb-20">
 					<div className="text-2xl font-bold pb-5">Here is Your Plan</div>
-					<div className="w-[600px] h-[400px]">
+					<div className="w-[900px] h-[700px]">
 						<GoogleMap
 							id={"google-map-view"}
+							zoom={11}
 							ref={mapRef}
 							options={mapOptions}
 							mapContainerStyle={{width:'100%', height:'100%'}}
 							center={{lat:parseFloat(mapLat), lng:parseFloat(mapLong)}}
 						>
+							<Marker key={"point_depot"}>
+								<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions}>
+									<div className="px-[9px] py-2 text-white">⭐</div>
+								</InfoWindow>
+							</Marker> 
+
+							{
+								Object.keys(destinations)?.map((key) =>
+								{	
+									if (destinations?.[key]?.lat === "" || destinations?.[key]?.lat === null || destinations?.[key]?.lat === undefined || destinations?.[key]?.long === "" || destinations?.[key]?.long === null || destinations?.[key]?.long === undefined)
+										return null;
+
+									return (
+									<InfoWindow key={key} position={{ lat: parseFloat(destinations?.[key]?.lat), lng: parseFloat(destinations?.[key]?.long) }} options={infoOptions}>
+										<div className="px-3 py-2 text-white">{key}</div>
+									</InfoWindow>)
+								})
+							}
+
 						</GoogleMap>
 					</div>
 				</div>
