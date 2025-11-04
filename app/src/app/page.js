@@ -10,7 +10,7 @@ export default function Home() {
 	const mapLong = 46.698268964794934;
 
 	// Road speed in KPH
-	const speed = 20.0;
+	const [speed, setSpeed] = useState(20.0);
 
 	// Depot
 	const [depot, setDepot] = useState({ lat: "", long: "" });
@@ -65,23 +65,35 @@ export default function Home() {
 	};
 
 	const renderDepot = () => (
-		<div className="flex items-center gap-2 pb-2">
-			<div className="w-32 whitespace-nowrap">Depot:</div>
-			<input
-				type="text"
-				placeholder="Latitude"
-				className="bg-white rounded p-2 border"
-				value={depot.lat}
-				onChange={e => handleDepotChange("lat", e.target.value)}
-			/>
-			<input
-				type="text"
-				placeholder="Longitude"
-				className="bg-white rounded p-2 border"
-				value={depot.long}
-				onChange={e => handleDepotChange("long", e.target.value)}
-			/>
-		</div>
+		<>
+			<div className="flex items-center gap-2 pb-2">
+				<div className="w-32 whitespace-nowrap">Speed Limit (km):</div>
+				<input
+					type="text"
+					placeholder="Speed"
+					className="bg-white rounded p-2 border"
+					value={speed}
+					onChange={e => handleSpeedChange(e.target.value)}
+				/>
+			</div>
+			<div className="flex items-center gap-2 pb-2">
+				<div className="w-32 whitespace-nowrap">Depot:</div>
+				<input
+					type="text"
+					placeholder="Latitude"
+					className="bg-white rounded p-2 border"
+					value={depot.lat}
+					onChange={e => handleDepotChange("lat", e.target.value)}
+				/>
+				<input
+					type="text"
+					placeholder="Longitude"
+					className="bg-white rounded p-2 border"
+					value={depot.long}
+					onChange={e => handleDepotChange("long", e.target.value)}
+				/>
+			</div>			
+		</>
 	);
 
 	const renderDestinationInput = (id, label) => (
@@ -120,6 +132,21 @@ export default function Home() {
 			</select>
 		</div>
 	);
+
+	const handleSpeedChange = (value) =>
+	{
+		if (value === "") {
+			setSpeed("");
+			return;
+		}
+
+		const num = Number(value);
+
+		// accept only integers >= 0
+		if (Number.isInteger(num) && num >= 0) {
+			setSpeed(num);
+		}
+	};
 
 	const handleDepotChange = (key, value) => {
 		setDepot(prev => ({ ...prev, [key]: value }));
@@ -193,7 +220,7 @@ export default function Home() {
 		handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
 	};
 
-	const planManually = () => { 
+	const planManually = () => {
 
 		let points = [];
 
@@ -241,13 +268,15 @@ export default function Home() {
 			setOptimizedPlanTime(tempTime);
 			setOptimizedPlanPath(plan.path);
 
+			console.log(plan.path)
+
 			alert("✅ Planning Completed");
 		}
 	}
 
 	const calculatePath = (origin, destinations) => {
 
-			// inline distance in km using Haversine
+		// inline distance in km using Haversine
 		const distanceKm = (a, b) => {
 			const R = 6371;
 			const toRad = x => (x * Math.PI) / 180;
@@ -277,14 +306,13 @@ export default function Home() {
 		}
 
 		const totalTimeHrs = speed > 0 ? totalKm / speed : 0;
-  		const totalTimeMins = totalTimeHrs * 60;
+		const totalTimeMins = totalTimeHrs * 60;
 
-		return { path: fullRoute, totalKm:totalKm, time:totalTimeMins };
+		return { path: fullRoute, totalKm: totalKm, time: totalTimeMins };
 	}
 
 	const calculatePathOptimized = (origin, destinations) => {
-
-			// inline distance in km using Haversine
+		// Haversine distance in km
 		const distanceKm = (a, b) => {
 			const R = 6371;
 			const toRad = x => (x * Math.PI) / 180;
@@ -299,25 +327,85 @@ export default function Home() {
 		};
 
 		if (!origin || !Array.isArray(destinations) || destinations.length === 0) {
-			return { path: [origin, ...(destinations || [])], totalKm: 0 };
+			const labeledOrigin = { ...origin, label: "origin" };
+			const path = [labeledOrigin, labeledOrigin];
+			return { path, totalKm: 0, totalTimeHrs: 0, totalTimeMins: 0 };
 		}
 
-		// Ensure origin has a label
+		// Ensure labels for all points
 		const labeledOrigin = { ...origin, label: "origin" };
+		const labeledDestinations = destinations.map((d, i) => ({
+			...d,
+			label: d.label || String.fromCharCode(65 + i), // A, B, C...
+		}));
 
-		// Build full route (start + all destinations + return to origin)
-		const fullRoute = [labeledOrigin, ...destinations, labeledOrigin];
-		let totalKm = 0;
+		// 1) Nearest neighbor seed
+		const remaining = labeledDestinations.slice();
+		const tour = [];
+		let current = labeledOrigin;
 
-		for (let i = 0; i < fullRoute.length - 1; i++) {
-			totalKm += distanceKm(fullRoute[i], fullRoute[i + 1]);
+		while (remaining.length) {
+			let bestIdx = 0;
+			let bestDist = Infinity;
+			for (let i = 0; i < remaining.length; i++) {
+				const d = remaining[i];
+				const dist = distanceKm(current, d);
+				if (dist < bestDist) {
+					bestDist = dist;
+					bestIdx = i;
+				}
+			}
+			const next = remaining.splice(bestIdx, 1)[0];
+			tour.push(next);
+			current = next;
 		}
 
-		const totalTimeHrs = speed > 0 ? totalKm / speed : 0;
-  		const totalTimeMins = totalTimeHrs * 60;
+		// 2) 2-opt improvement with fixed start at origin
+		const twoOpt = pts => {
+			const n = pts.length;
+			if (n < 3) return pts.slice();
+			let route = pts.slice();
+			let improved = true;
 
-		return { path: fullRoute, totalKm:totalKm, time:totalTimeMins };
-	}
+			while (improved) {
+				improved = false;
+				for (let i = 0; i < n - 1; i++) {
+					const Aprev = i === 0 ? labeledOrigin : route[i - 1];
+					const A = route[i];
+					for (let k = i + 1; k < n; k++) {
+						const B = route[k];
+						const Bnext = k === n - 1 ? null : route[k + 1];
+
+						const currentCost = distanceKm(Aprev, A) + (Bnext ? distanceKm(B, Bnext) : 0);
+						const swappedCost = distanceKm(Aprev, B) + (Bnext ? distanceKm(A, Bnext) : 0);
+
+						if (swappedCost + 1e-9 < currentCost) {
+							const reversed = route.slice(i, k + 1).reverse();
+							route.splice(i, reversed.length, ...reversed);
+							improved = true;
+						}
+					}
+				}
+			}
+			return route;
+		};
+
+		const improved = twoOpt(tour);
+
+		// 3) Close the tour by returning to origin and compute totals
+		const path = [labeledOrigin, ...improved, labeledOrigin];
+
+		let totalKm = 0;
+		for (let i = 0; i < path.length - 1; i++) {
+			totalKm += distanceKm(path[i], path[i + 1]);
+		}
+
+		// use global speed (in km/h)
+		const totalTimeHrs = speed > 0 ? totalKm / speed : 0;
+		const totalTimeMins = totalTimeHrs * 60;
+
+		return { path, totalKm, totalTimeHrs, totalTimeMins };
+	};
 
 	return isLoaded ? (
 		<div className="flex items-top gap-2 p-5">
@@ -358,6 +446,15 @@ export default function Home() {
 					<div className="text-2xl font-bold pb-5">Optimized Planning</div>
 					<div className="flex pt-2">
 						{(optimizedPlanDistance && optimizedPlanTime) ? `Distance is (${optimizedPlanDistance} km) and Time is (${optimizedPlanTime} Minutes)` : "Click on plan to design your route"}
+					</div>
+					<div className="pt-2">
+						{(!optimizedPlanPath) ? null : optimizedPlanPath?.map((destination, key) => {
+							return (
+								<div key={key}>
+									Trip {key + 1}: {destination?.label}
+								</div>
+							)
+						})}
 					</div>
 					<div className="flex justify-end pt-2">
 						<button onClick={planWithOptimization} className="bg-green-600 text-white px-4 py-2 rounded">
