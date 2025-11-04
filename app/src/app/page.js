@@ -1,353 +1,293 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 
 export default function Home() {
-  // Depot
-  const [depotLat, setDepotLat] = useState("");
-  const [depotLong, setDepotLong] = useState("");
 
-  // Trips A to D
-  const [tripLatA, setTripLatA] = useState("");
-  const [tripLongA, setTripLongA] = useState("");
-  const [tripLatB, setTripLatB] = useState("");
-  const [tripLongB, setTripLongB] = useState("");
-  const [tripLatC, setTripLatC] = useState("");
-  const [tripLongC, setTripLongC] = useState("");
-  const [tripLatD, setTripLatD] = useState("");
-  const [tripLongD, setTripLongD] = useState("");
+	// Set PSU to be Depot :)
+	const mapLat = 24.737513266445525;
+	const mapLong = 46.698268964794934;
 
-  // Parameters
-  const [capacity, setCapacity] = useState(2);
-  const [speedKmh, setSpeedKmh] = useState(40);
-  const [costMode, setCostMode] = useState("distance"); // distance or time
+	// Depot
+	const [depot, setDepot] = useState({ lat: "", long: "" });
 
-  // Validation
-  const isValidLatitude = (val) => {
-    if (!val && val !== 0) return false;
-    const n = parseFloat(String(val).trim());
-    return !isNaN(n) && n >= -90 && n <= 90;
-  };
+	// Destinations A–D
+	const [destinations, setDestinations] = useState({
+		A: { lat: "", long: "" },
+		B: { lat: "", long: "" },
+		C: { lat: "", long: "" },
+		D: { lat: "", long: "" },
+	});
 
-  const isValidLongitude = (val) => {
-    if (!val && val !== 0) return false;
-    const n = parseFloat(String(val).trim());
-    return !isNaN(n) && n >= -180 && n <= 180;
-  };
+	// Manual plan 
+	const [manualPlan, setManualPlan] = useState([]);
 
-  const validateAll = () => {
-    const all = [
-      { label: "Depot", lat: depotLat, long: depotLong },
-      { label: "A", lat: tripLatA, long: tripLongA },
-      { label: "B", lat: tripLatB, long: tripLongB },
-      { label: "C", lat: tripLatC, long: tripLongC },
-      { label: "D", lat: tripLatD, long: tripLongD },
-    ];
-    for (const { label, lat, long } of all) {
-      if (!isValidLatitude(lat)) {
-        alert(`Invalid latitude for ${label}`);
-        return false;
-      }
-      if (!isValidLongitude(long)) {
-        alert(`Invalid longitude for ${label}`);
-        return false;
-      }
-    }
-    return true;
-  };
 
-  // Helpers
-  const toNum = (x) => parseFloat(String(x).trim());
+	// GoogleMapSetup
+	const mapRef = useRef(null);
 
-  const haversineKm = (a, b) => {
-    const R = 6371;
-    const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-    const dLon = ((b.long - a.long) * Math.PI) / 180;
-    const la1 = (a.lat * Math.PI) / 180;
-    const la2 = (b.lat * Math.PI) / 180;
-    const s1 =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(s1), Math.sqrt(1 - s1));
-    return R * c;
-  };
+	const { isLoaded } = useJsApiLoader(
+    {
+        id:"google-map-view",
+        googleMapsApiKey: "SOMEKEY"
+    });
 
-  const liveTimeHours = (km) => km / Math.max(1, speedKmh);
+	const mapOptions = {};	
 
-  const trafficMultiplier = () => 1 + Math.random() * 0.5;
 
-  const depot = useMemo(
-    () => ({ label: "Depot", lat: toNum(depotLat), long: toNum(depotLong) }),
-    [depotLat, depotLong]
-  );
+	const renderDepot = () => (
+		<div className="flex items-center gap-2 pb-2">
+			<div className="w-32 whitespace-nowrap">Depot:</div>
+			<input
+				type="text"
+				placeholder="Latitude"
+				className="bg-white rounded p-2 border"
+				value={depot.lat}
+				onChange={e => handleDepotChange("lat", e.target.value)}
+			/>
+			<input
+				type="text"
+				placeholder="Longitude"
+				className="bg-white rounded p-2 border"
+				value={depot.long}
+				onChange={e => handleDepotChange("long", e.target.value)}
+			/>
+		</div>
+	);
 
-  const customers = useMemo(
-    () =>
-      [
-        { label: "A", lat: toNum(tripLatA), long: toNum(tripLongA) },
-        { label: "B", lat: toNum(tripLatB), long: toNum(tripLongB) },
-        { label: "C", lat: toNum(tripLatC), long: toNum(tripLongC) },
-        { label: "D", lat: toNum(tripLatD), long: toNum(tripLongD) },
-      ].filter((p) => !isNaN(p.lat) && !isNaN(p.long)),
-    [
-      tripLatA,
-      tripLongA,
-      tripLatB,
-      tripLongB,
-      tripLatC,
-      tripLongC,
-      tripLatD,
-      tripLongD,
-    ]
-  );
+	const renderDestinationInput = (id, label) => (
+		<div className="flex items-center gap-2 pb-2">
+			<div className="w-32 whitespace-nowrap">{label}:</div>
+			<input
+				type="text"
+				placeholder="Latitude"
+				className="bg-white rounded p-2 border"
+				value={destinations[id].lat}
+				onChange={e => handleDestinationChange(id, "lat", e.target.value)}
+			/>
+			<input
+				type="text"
+				placeholder="Longitude"
+				className="bg-white rounded p-2 border"
+				value={destinations[id].long}
+				onChange={e => handleDestinationChange(id, "long", e.target.value)}
+			/>
+		</div>
+	);
 
-  // inject the incident into this function (speed is reduced?)
+	const renderManualPlanningInput = (id, label) => (
+		<div className="flex items-center gap-2 pb-2">
+			<div className="w-32 whitespace-nowrap">{label}:</div>
+			<select
+				className="grow bg-white rounded p-2 border"
+				value={manualPlan?.[id] ?? ""}
+				onChange={e => handleManualPlanChange(id, e.target.value)}
+			>
+				<option value="">Select option</option>
+				<option value="A">A</option>
+				<option value="B">B</option>
+				<option value="C">C</option>
+				<option value="D">D</option>
+			</select>
+		</div>
+	);
 
-  // Preplanned
-  const planPreplanned = (speed) => {
-    const remaining = [...customers];
-    const trips = [];
-    let totalKm = 0;
-    let totalH = 0;
+	const handleDepotChange = (key, value) => {
+		setDepot(prev => ({ ...prev, [key]: value }));
+	};
 
-    while (remaining.length > 0) {
-      let trip = ["Depot"];
-      let load = 0;
-      let pos = depot;
-      while (load < capacity && remaining.length > 0) {
-        let bestIdx = -1;
-        let bestDist = Infinity;
-        for (let i = 0; i < remaining.length; i++) {
-          const d = haversineKm(pos, remaining[i]);
-          if (d < bestDist) {
-            bestDist = d;
-            bestIdx = i;
-          }
-        }
-        const next = remaining.splice(bestIdx, 1)[0];
-        trip.push(next.label);
-        totalKm += bestDist;
-        totalH += liveTimeHours(bestDist);
-        pos = next;
-        load += 1;
-      }
-      const back = haversineKm(pos, depot);
-      totalKm += back;
-      totalH += liveTimeHours(back);
-      trip.push("Depot");
-      trips.push(trip);
-    }
-    return { trips, totalKm, totalH };
-  };
+	const handleDestinationChange = (id, key, value) => {
+		setDestinations(prev => ({
+			...prev,
+			[id]: { ...prev[id], [key]: value },
+		}));
+	};
 
-  // Reactive
-  const planReactive = () => {
-    const remaining = [...customers];
-    const trips = [];
-    let totalKm = 0;
-    let totalH = 0;
+	const handleManualPlanChange = (index, value) => {
+		setManualPlan(prev => {
+			const updated = [...prev];
+			updated[index] = value;
+			return updated;
+		});
+	};
 
-	// visualize the change 
-    while (remaining.length > 0) {
-      let trip = ["Depot"];
-      let load = 0;
-      let pos = depot;
-      while (load < capacity && remaining.length > 0) {
-        let bestIdx = -1;
-        let bestScore = Infinity;
-        let bestKm = 0;
+	const isValideSetOfCoordinates = (points) => {
 
-        for (let i = 0; i < remaining.length; i++) {
-          const km = haversineKm(pos, remaining[i]);
-          const timeH =
-            costMode === "time"
-              ? liveTimeHours(km) * trafficMultiplier()
-              : liveTimeHours(km);
-          const score = costMode === "time" ? timeH : km;
-          if (score < bestScore) {
-            bestScore = score;
-            bestIdx = i;
-            bestKm = km;
-          }
-        }
+		let errorsFound = 0;
 
-        const next = remaining.splice(bestIdx, 1)[0];
-        const realizedKm = bestKm;
-        const realizedTimeH =
-          costMode === "time"
-            ? liveTimeHours(bestKm) * trafficMultiplier()
-            : liveTimeHours(bestKm);
+		points.forEach((p, i) => {
+			if (p?.lat === "" || p?.lat === null || p?.lat === undefined || p?.long === "" || p?.long === null || p?.long === undefined) {
+				errorsFound++;
+			}
+			else {
+				const lat = Number(p?.lat);
+				const long = Number(p?.long);
 
-        totalKm += realizedKm;
-        totalH += realizedTimeH;
-        trip.push(next.label);
-        pos = next;
-        load += 1;
-      }
-      const backKm = haversineKm(pos, depot);
-      const backTimeH =
-        costMode === "time"
-          ? liveTimeHours(backKm) * trafficMultiplier()
-          : liveTimeHours(backKm);
-      totalKm += backKm;
-      totalH += backTimeH;
-      trip.push("Depot");
-      trips.push(trip);
-    }
-    return { trips, totalKm, totalH };
-  };
+				const validLat = Number.isFinite(lat) && lat >= -90 && lat <= 90;
+				const validLong = Number.isFinite(long) && long >= -180 && long <= 180;
 
-  const performPreplanned = () => {
-    if (!validateAll()) return;
-    const res = planPreplanned();
-    const msg =
-      `Preplanned trips: ${res.trips.map((t) => t.join(" -> ")).join(" | ")}\n` +
-      `Total distance km: ${res.totalKm.toFixed(2)}\n` +
-      `Total time hours at speed ${speedKmh}: ${res.totalH.toFixed(2)}`;
-    alert(msg);
-    console.log(msg);
-  };
+				if (!validLat || !validLong) {
+					errorsFound++;
+				}
+			}
+		});
 
-  const performReactive = () => {
-    if (!validateAll()) return;
-    const res = planReactive();
-    const msg =
-      `Reactive trips: ${res.trips.map((t) => t.join(" -> ")).join(" | ")}\n` +
-      `Total distance km: ${res.totalKm.toFixed(2)}\n` +
-      `Total time hours at speed ${speedKmh} with traffic: ${res.totalH.toFixed(2)}`;
-    alert(msg);
-    console.log(msg);
-  };
+		return (errorsFound === 0);
+	};
 
-  // Third button to generate sample coordinates for depot and A to D
-  const randomInRange = (min, max) => (Math.random() * (max - min) + min).toFixed(6);
-  const generateSampleData = () => {
-    // Set PSU to be Depot :)
-    setDepotLat(24.737513266445525);
-    setDepotLong(46.698268964794934);
-    // Points near the depot for a realistic cluster
-    const baseLat = parseFloat(24.737513266445525);
-    const baseLon = parseFloat(46.698268964794934);
-    const jitter = () => (Math.random() - 0.5) * 0.2; // about ±0.1 deg
-    setTripLatA((baseLat + jitter()).toFixed(6));
-    setTripLongA((baseLon + jitter()).toFixed(6));
-    setTripLatB((baseLat + jitter()).toFixed(6));
-    setTripLongB((baseLon + jitter()).toFixed(6));
-    setTripLatC((baseLat + jitter()).toFixed(6));
-    setTripLongC((baseLon + jitter()).toFixed(6));
-    setTripLatD((baseLat + jitter()).toFixed(6));
-    setTripLongD((baseLon + jitter()).toFixed(6));
-  };
+	const isValideManualPlanning = () => {
 
-  return (
-    <div className="p-6 space-y-8">
-      <h1 className="text-3xl font-semibold">DVR Research</h1>
+		const uniqueValues = new Set(manualPlan.filter(v => v !== "" && v != null));
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">0. Pickup</h2>
-        <div className="flex items-center space-x-3">
-          <input
-            type="text"
-            placeholder="Depot latitude"
-            className="border rounded p-2"
-            value={depotLat}
-            onChange={(e) => setDepotLat(e.target.value)}
-          />
-          <input
-            type="text"
-            placeholder="Depot longitude"
-            className="border rounded p-2"
-            value={depotLong}
-            onChange={(e) => setDepotLong(e.target.value)}
-          />
-        </div>
-      </section>
+		return (Array.isArray(manualPlan) && manualPlan.length === 4 && uniqueValues.size === manualPlan.length)
+	};
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">1. Dropoff</h2>
+	const generateSampleData = () => {
 
-        {[
-          ["A", tripLatA, setTripLatA, tripLongA, setTripLongA],
-          ["B", tripLatB, setTripLatB, tripLongB, setTripLongB],
-          ["C", tripLatC, setTripLatC, tripLongC, setTripLongC],
-          ["D", tripLatD, setTripLatD, tripLongD, setTripLongD],
-        ].map(([label, lat, setLat, lon, setLon]) => (
-          <div key={label} className="flex items-center space-x-3">
-            <div className="w-7 h-7 rounded-full items-center flex justify-center bg-gray-200 text-sm font-semibold">
-              {label}
-            </div>
-            <input
-              type="text"
-              placeholder="Latitude"
-              className="bg-white rounded p-2 border"
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Longitude"
-              className="bg-white rounded p-2 border"
-              value={lon}
-              onChange={(e) => setLon(e.target.value)}
-            />
-          </div>
-        ))}
-      </section>
+		handleDepotChange("lat", mapLat);
+		handleDepotChange("long", mapLong);
 
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">2. Parameters</h2>
-        <div className="flex items-center gap-3 flex-wrap">
-          <label className="flex items-center gap-2">
-            <span>Capacity per trip</span>
-            <input
-              type="number"
-              min={1}
-              className="border rounded p-2 w-24"
-              value={capacity}
-              onChange={(e) => setCapacity(parseInt(e.target.value || "1", 10))}
-            />
-          </label>
+		// Points near the depot for a realistic cluster
+		const baseLat = parseFloat(mapLat);
+		const baseLong = parseFloat(mapLong);
+		const jitter = () => (Math.random() - 0.5) * 0.2; // about ±0.1 deg
 
-          <label className="flex items-center gap-2">
-            <span>Vehicle speed kmh</span>
-            <input
-              type="number"
-              min={1}
-              className="border rounded p-2 w-24"
-              value={speedKmh}
-              onChange={(e) => setSpeedKmh(parseFloat(e.target.value || "1"))}
-            />
-          </label>
+		handleDestinationChange("A", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("A", "long", (baseLong + jitter()).toFixed(6));
+		handleDestinationChange("B", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("B", "long", (baseLong + jitter()).toFixed(6));
+		handleDestinationChange("C", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("C", "long", (baseLong + jitter()).toFixed(6));
+		handleDestinationChange("D", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
+	};
 
-          <label className="flex items-center gap-2">
-            <span>Cost mode</span>
-            <select
-              className="border rounded p-2"
-              value={costMode}
-              onChange={(e) => setCostMode(e.target.value)}
-            >
-              <option value="distance">Distance</option>
-              <option value="time">Time</option>
-            </select>
-          </label>
-        </div>
-      </section>
+	const planManually = () => {
 
-      <section className="flex items-center gap-4">
-        <button onClick={performPreplanned} className="bg-black text-white px-4 py-2 rounded">
-          Run Preplanned
-        </button>
-        <button onClick={performReactive} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Run Reactive
-        </button>
-        <button onClick={generateSampleData} className="bg-green-600 text-white px-4 py-2 rounded">
-          Generate Sample Data
-        </button>
-      </section>
+		let points = [];
 
-      <p className="text-sm text-gray-600">
-        Use Generate Sample Data to fill depot and points A to D with valid random coordinates.
-      </p>
-    </div>
-  );
+		points.push({ lat: destinations?.A?.lat, long: destinations?.A?.long });
+		points.push({ lat: destinations?.B?.lat, long: destinations?.B?.long });
+		points.push({ lat: destinations?.C?.lat, long: destinations?.C?.long });
+		points.push({ lat: destinations?.D?.lat, long: destinations?.D?.long });
+
+		if (!isValideSetOfCoordinates([...[{ lat: depot?.lat, long: depot?.long }], ...points])) {
+			alert("Invalid Latitude/Longitude Values");
+		}
+		else if (!isValideManualPlanning()) {
+			alert("You have to select 4 different destinations");
+		}
+		else {
+			let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
+			
+			console.log("path", plan.path)
+			console.log("distance", plan.totalKm)
+		}
+	}
+
+	const calculatePath = (origin, destinations) => {
+
+		window.scrollTo({ top: 0, behavior: "smooth" });
+
+		// inline distance in km using Haversine
+		const distanceKm = (a, b) =>
+		{
+			const R = 6371; //6371 km is Earth’s radius.
+			const toRad = x => (x * Math.PI) / 180;
+			const dLat = toRad(Number(b.lat) - Number(a.lat));
+			const dLon = toRad(Number(b.long) - Number(a.long));
+			const la1 = toRad(Number(a.lat));
+			const la2 = toRad(Number(b.lat));
+			const h =
+				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+			return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+		};
+
+		if (!origin || !Array.isArray(destinations) || destinations.length === 0) {
+			return { path: [origin, ...(destinations || [])], totalKm: 0 };
+		}
+
+		const unvisited = destinations.slice();
+		const path = [origin];
+		let current = origin;
+		let totalKm = 0;
+
+		while (unvisited.length)
+		{
+			let bestIdx = 0;
+			let bestDist = Infinity;
+
+			for (let i = 0; i < unvisited.length; i++) {
+				const d = unvisited[i];
+				const dist = distanceKm(current, d);
+				if (dist < bestDist) {
+					bestDist = dist;
+					bestIdx = i;
+				}
+			}
+
+			const next = unvisited.splice(bestIdx, 1)[0];
+			totalKm += bestDist;
+			path.push(next);
+			current = next;
+		}
+
+		return { path, totalKm };
+	}
+
+
+	return isLoaded ? (
+		<div className="flex items-top gap-2 p-5">
+
+			<div className="w-fit">
+
+				<div className="pb-20">
+					<div className="text-2xl font-bold pb-5">Planner</div>
+					{renderDepot()}
+					{renderDestinationInput("A", "Destination A")}
+					{renderDestinationInput("B", "Destination B")}
+					{renderDestinationInput("C", "Destination C")}
+					{renderDestinationInput("D", "Destination D")}
+					<div className="flex justify-end pt-2">
+						<button onClick={generateSampleData} className="bg-blue-600 text-white px-4 py-2 rounded">
+							Generate Sample
+						</button>
+					</div>
+				</div>
+
+				<div className="pb-20">
+					<div className="text-2xl font-bold pb-5">Manual Planning (Anticipated)</div>
+					{renderManualPlanningInput(0, "Trip 1")}
+					{renderManualPlanningInput(1, "Trip 2")}
+					{renderManualPlanningInput(2, "Trip 3")}
+					{renderManualPlanningInput(3, "Trip 4")}
+					<div className="flex justify-end pt-2">
+						<button onClick={planManually} className="bg-green-600 text-white px-4 py-2 rounded">
+							Plan Manually
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div className="grow" />
+
+			<div className="w-fit">
+				<div className="pb-20">
+					<div className="text-2xl font-bold pb-5">Here is Your Plan</div>
+					<div className="w-[600px] h-[400px]">
+						<GoogleMap
+							id={"google-map-view"}
+							ref={mapRef}
+							options={mapOptions}
+							mapContainerStyle={{width:'100%', height:'100%'}}
+							center={{lat:parseFloat(mapLat), lng:parseFloat(mapLong)}}
+						>
+						</GoogleMap>
+					</div>
+				</div>
+			</div>
+		</div>
+	) : (<></>);
 }
