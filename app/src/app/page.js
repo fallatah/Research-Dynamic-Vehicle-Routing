@@ -71,7 +71,7 @@ export default function Home() {
 				<input
 					type="text"
 					placeholder="Speed"
-					className="bg-white rounded p-2 border"
+					className="bg-white rounded p-2 border grow"
 					value={speed}
 					onChange={e => handleSpeedChange(e.target.value)}
 				/>
@@ -81,7 +81,7 @@ export default function Home() {
 				<input
 					type="text"
 					placeholder="Latitude"
-					className="bg-white rounded p-2 border"
+					className="bg-white rounded p-2 border grow"
 					value={depot.lat}
 					onChange={e => handleDepotChange("lat", e.target.value)}
 				/>
@@ -102,14 +102,14 @@ export default function Home() {
 			<input
 				type="text"
 				placeholder="Latitude"
-				className="bg-white rounded p-2 border"
+				className="bg-white rounded p-2 border grow"
 				value={destinations[id].lat}
 				onChange={e => handleDestinationChange(id, "lat", e.target.value)}
 			/>
 			<input
 				type="text"
 				placeholder="Longitude"
-				className="bg-white rounded p-2 border"
+				className="bg-white rounded p-2 border grow"
 				value={destinations[id].long}
 				onChange={e => handleDestinationChange(id, "long", e.target.value)}
 			/>
@@ -407,24 +407,16 @@ export default function Home() {
 		return { path, totalKm, totalTimeHrs, totalTimeMins };
 	};
 
-	const simulateTrip1 = () => {
-		alert(`Manual from ${manualPlanPath?.[0]?.label} -> ${manualPlanPath?.[1]?.label} and Hurestic is from ${optimizedPlanPath?.[0]?.label} -> ${optimizedPlanPath?.[1]?.label}`);
-	};
+	const simulateTrip = (tripNumber) => {
 
-	const simulateTrip2 = () => {
-		alert(`Manual from ${manualPlanPath?.[1]?.label} -> ${manualPlanPath?.[2]?.label} and Hurestic is from ${optimizedPlanPath?.[1]?.label} -> ${optimizedPlanPath?.[2]?.label}`);
-	};
-
-	const simulateTrip3 = () => {
-		alert(`Manual from ${manualPlanPath?.[2]?.label} -> ${manualPlanPath?.[3]?.label} and Hurestic is from ${optimizedPlanPath?.[2]?.label} -> ${optimizedPlanPath?.[3]?.label}`);
-	};
-
-	const simulateTrip4 = () => {
-		alert(`Manual from ${manualPlanPath?.[3]?.label} -> ${manualPlanPath?.[4]?.label} and Hurestic is from ${optimizedPlanPath?.[3]?.label} -> ${optimizedPlanPath?.[4]?.label}`);
-	};
-
-	const simulateTrip5 = () => {
-		alert(`Manual from ${manualPlanPath?.[4]?.label} -> ${manualPlanPath?.[5]?.label} and Hurestic is from ${optimizedPlanPath?.[4]?.label} -> ${optimizedPlanPath?.[5]?.label}`);
+		if(manualPlanPath?.[tripNumber-1]?.label && optimizedPlanPath?.[tripNumber-1]?.label)
+		{
+			alert(`🚙 Manual is traveling from ${manualPlanPath?.[tripNumber-1]?.label} -> ${manualPlanPath?.[tripNumber]?.label}\n🚗 Heuristic is traveling from ${optimizedPlanPath?.[tripNumber-1]?.label} -> ${optimizedPlanPath?.[tripNumber]?.label}`);
+		}
+		else
+		{
+			alert("❌ You should plan both trips");
+		}
 	};
 
 	return isLoaded ? (
@@ -490,14 +482,17 @@ export default function Home() {
 				</div>
 
 				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5"> 3:Simulation with Reduced Speed (In Progress)</div>
+					<div className="text-2xl font-bold pb-5"> 3:Simulate Heuristic Planning (In Progress)</div>
 					<div className="flex justify-end pt-2 gap-2">
 						<input
 							type="text"
 							placeholder="Speed"
-							className="bg-white rounded p-2 border"
+							className="bg-white rounded p-2 border w-20"
+							defaultValue={speed}
+							onChange={e => handleSpeedChange(e.target.value)}
 						/>
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip1}>
+						<div className="p-3">km</div>
+						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(1)}>
 							Simulate Trip 1
 						</button>
 					</div>	
@@ -505,9 +500,12 @@ export default function Home() {
 						<input
 							type="text"
 							placeholder="Speed"
-							className="bg-white rounded p-2 border"
+							className="bg-white rounded p-2 border w-20"
+							defaultValue={speed}
+							onChange={e => handleSpeedChange(e.target.value)}
 						/>
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip2}>
+						<div className="p-3">km</div>
+						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(2)}>
 							Simulate Trip 2
 						</button>
 					</div>	
@@ -515,9 +513,12 @@ export default function Home() {
 						<input
 							type="text"
 							placeholder="Speed"
-							className="bg-white rounded p-2 border"
+							className="bg-white rounded p-2 border w-20"
+							defaultValue={speed}
+							onChange={e => handleSpeedChange(e.target.value)}
 						/>
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip3}>
+						<div className="p-3">km</div>
+						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(3)}>
 							Simulate Trip 3
 						</button>
 					</div>	
@@ -525,9 +526,12 @@ export default function Home() {
 						<input
 							type="text"
 							placeholder="Speed"
-							className="bg-white rounded p-2 border"
+							className="bg-white rounded p-2 border w-20"
+							defaultValue={speed}
+							onChange={e => handleSpeedChange(e.target.value)}
 						/>
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip4}>
+						<div className="p-3">km</div>
+						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(4)}>
 							Simulate Trip 4
 						</button>
 					</div>
@@ -535,9 +539,12 @@ export default function Home() {
 						<input
 							type="text"
 							placeholder="Speed"
-							className="bg-white rounded p-2 border"
+							className="bg-white rounded p-2 border w-20"
+							defaultValue={speed}
+							onChange={e => handleSpeedChange(e.target.value)}
 						/>
-						<button className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer" onClick={simulateTrip5}>
+						<div className="p-3">km</div>
+						<button className="bg-red-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(5)}>
 							Return to Depot
 						</button>
 					</div>																									
