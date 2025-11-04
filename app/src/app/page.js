@@ -9,6 +9,9 @@ export default function Home() {
 	const mapLat = 24.737513266445525;
 	const mapLong = 46.698268964794934;
 
+	// Road speed in KPH
+	const speed = 20.0;
+
 	// Depot
 	const [depot, setDepot] = useState({ lat: "", long: "" });
 
@@ -20,18 +23,25 @@ export default function Home() {
 		D: { lat: "", long: "" },
 	});
 
-	// Manual plan 
+	// Manual Plan 
 	const [manualPlan, setManualPlan] = useState([]);
+	const [manualPlanDistance, setManualPlanDistance] = useState(undefined);
+	const [manualPlanTime, setManualPlanTime] = useState(undefined);
+	const [manualPlanPath, setManualPlanPath] = useState(undefined);
 
+	// Optimized Plan 
+	const [optimizedPlanDistance, setOptimizedPlanDistance] = useState(undefined);
+	const [optimizedPlanTime, setOptimizedPlanTime] = useState(undefined);
+	const [optimizedPlanPath, setOptimizedPlanPath] = useState(undefined);
 
-	// GoogleMapSetup
+	// Google Map & Its Properties
 	const mapRef = useRef(null);
 
 	const { isLoaded } = useJsApiLoader(
-    {
-        id:"google-map-view",
-        googleMapsApiKey: `${process.env.NEXT_PUBLIC_MAP_API_KEY}`
-    });
+		{
+			id: "google-map-view",
+			googleMapsApiKey: `${process.env.NEXT_PUBLIC_MAP_API_KEY}`
+		});
 
 	const mapOptions = {
 		zoomControl: false,
@@ -40,19 +50,19 @@ export default function Home() {
 		streetViewControl: false,
 		rotateControl: false,
 		fullscreenControl: false,
-		clickableIcons: false	
-	};	
+		clickableIcons: false
+	};
 
 	const infoOptions =
-    {
-        enableEventPropagation: true,
-        disableAutoPan:true,
-        boxStyle: {
-            content: "",
-            minWidth: "30px"
-        },
-        closeBoxURL: ""
-    };
+	{
+		enableEventPropagation: true,
+		disableAutoPan: true,
+		boxStyle: {
+			content: "",
+			minWidth: "30px"
+		},
+		closeBoxURL: ""
+	};
 
 	const renderDepot = () => (
 		<div className="flex items-center gap-2 pb-2">
@@ -163,6 +173,8 @@ export default function Home() {
 
 	const generateSampleData = () => {
 
+		window.scrollTo({ top: 0, behavior: "smooth" });
+
 		handleDepotChange("lat", mapLat);
 		handleDepotChange("long", mapLong);
 
@@ -185,32 +197,94 @@ export default function Home() {
 
 		let points = [];
 
+		manualPlan?.forEach(key => {
+			points.push({ label: key, lat: destinations?.[key]?.lat, long: destinations?.[key]?.long })
+		});
+
+		if (!isValideSetOfCoordinates([...[{ lat: depot?.lat, long: depot?.long }], ...points])) {
+			alert("❌ Invalid Latitude/Longitude Values");
+		}
+		else if (!isValideManualPlanning()) {
+			alert("❌ You have to select 4 different destinations");
+		}
+		else {
+			let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
+
+			let tempTime = plan.totalKm / speed; // stopped here
+
+			setManualPlanDistance(Math.round(plan.totalKm * 10) / 10);
+			setManualPlanTime(tempTime);
+			setManualPlanPath(plan.path);
+
+			console.log(plan?.path)
+
+			alert("✅ Planning Completed");
+		}
+	}
+
+	const planWithOptimization = () => {
+
+		let points = [];
+
 		points.push({ lat: destinations?.A?.lat, long: destinations?.A?.long });
 		points.push({ lat: destinations?.B?.lat, long: destinations?.B?.long });
 		points.push({ lat: destinations?.C?.lat, long: destinations?.C?.long });
 		points.push({ lat: destinations?.D?.lat, long: destinations?.D?.long });
 
 		if (!isValideSetOfCoordinates([...[{ lat: depot?.lat, long: depot?.long }], ...points])) {
-			alert("Invalid Latitude/Longitude Values");
-		}
-		else if (!isValideManualPlanning()) {
-			alert("You have to select 4 different destinations");
+			alert("❌ Invalid Latitude/Longitude Values");
 		}
 		else {
-			let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
-			
-			console.log("path", plan.path)
-			console.log("distance", plan.totalKm)
+			let plan = calculatePathOptimized({ lat: depot?.lat, long: depot?.long }, points);
+
+			let tempTime = Math.round(((plan.totalKm / speed) * 60) * 10) / 10;
+
+			setOptimizedPlanDistance(Math.round(plan.totalKm * 10) / 10);
+			setOptimizedPlanTime(tempTime);
+			setOptimizedPlanPath(plan.path);
+
+			alert("✅ Planning Completed");
 		}
 	}
 
 	const calculatePath = (origin, destinations) => {
 
-		window.scrollTo({ top: 0, behavior: "smooth" });
+			// inline distance in km using Haversine
+		const distanceKm = (a, b) => {
+			const R = 6371;
+			const toRad = x => (x * Math.PI) / 180;
+			const dLat = toRad(Number(b.lat) - Number(a.lat));
+			const dLon = toRad(Number(b.long) - Number(a.long));
+			const la1 = toRad(Number(a.lat));
+			const la2 = toRad(Number(b.lat));
+			const h =
+				Math.sin(dLat / 2) ** 2 +
+				Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+			return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+		};
+
+		if (!origin || !Array.isArray(destinations) || destinations.length === 0) {
+			return { path: [origin, ...(destinations || [])], totalKm: 0 };
+		}
+
+		// Ensure origin has a label
+		const labeledOrigin = { ...origin, label: "origin" };
+
+		// Build full route (start + all destinations + return to origin)
+		const fullRoute = [labeledOrigin, ...destinations, labeledOrigin];
+		let totalKm = 0;
+
+		for (let i = 0; i < fullRoute.length - 1; i++) {
+			totalKm += distanceKm(fullRoute[i], fullRoute[i + 1]);
+		}
+
+		return { path: fullRoute, totalKm };
+	}
+
+	const calculatePathOptimized = (origin, destinations) => {
 
 		// inline distance in km using Haversine
-		const distanceKm = (a, b) =>
-		{
+		const distanceKm = (a, b) => {
 			const R = 6371; //6371 km is Earth’s radius.
 			const toRad = x => (x * Math.PI) / 180;
 			const dLat = toRad(Number(b.lat) - Number(a.lat));
@@ -232,8 +306,7 @@ export default function Home() {
 		let current = origin;
 		let totalKm = 0;
 
-		while (unvisited.length)
-		{
+		while (unvisited.length) {
 			let bestIdx = 0;
 			let bestDist = Infinity;
 
@@ -254,7 +327,6 @@ export default function Home() {
 
 		return { path, totalKm };
 	}
-
 
 	return isLoaded ? (
 		<div className="flex items-top gap-2 p-5">
@@ -281,9 +353,24 @@ export default function Home() {
 					{renderManualPlanningInput(1, "Trip 2")}
 					{renderManualPlanningInput(2, "Trip 3")}
 					{renderManualPlanningInput(3, "Trip 4")}
+					<div className="flex pt-2">
+						{(manualPlanDistance && manualPlanTime) ? `Distance is (${manualPlanDistance} km) and Time is (${manualPlanTime} Minutes)` : ""}
+					</div>
 					<div className="flex justify-end pt-2">
 						<button onClick={planManually} className="bg-green-600 text-white px-4 py-2 rounded">
-							Plan Manually
+							Option 1: Plan Manually
+						</button>
+					</div>
+				</div>
+
+				<div className="pb-20">
+					<div className="text-2xl font-bold pb-5">Optimized Planning</div>
+					<div className="flex pt-2">
+						{(optimizedPlanDistance && optimizedPlanTime) ? `Distance is (${optimizedPlanDistance} km) and Time is (${optimizedPlanTime} Minutes)` : "Click on plan to design your route"}
+					</div>
+					<div className="flex justify-end pt-2">
+						<button onClick={planWithOptimization} className="bg-green-600 text-white px-4 py-2 rounded">
+							Option 2: Plan with Optimization
 						</button>
 					</div>
 				</div>
@@ -300,25 +387,24 @@ export default function Home() {
 							zoom={11}
 							ref={mapRef}
 							options={mapOptions}
-							mapContainerStyle={{width:'100%', height:'100%'}}
-							center={{lat:parseFloat(mapLat), lng:parseFloat(mapLong)}}
+							mapContainerStyle={{ width: '100%', height: '100%' }}
+							center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 						>
 							<Marker key={"point_depot"}>
 								<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions}>
 									<div className="px-[9px] py-2 text-white">⭐</div>
 								</InfoWindow>
-							</Marker> 
+							</Marker>
 
 							{
-								Object.keys(destinations)?.map((key) =>
-								{	
+								Object.keys(destinations)?.map((key) => {
 									if (destinations?.[key]?.lat === "" || destinations?.[key]?.lat === null || destinations?.[key]?.lat === undefined || destinations?.[key]?.long === "" || destinations?.[key]?.long === null || destinations?.[key]?.long === undefined)
 										return null;
 
 									return (
-									<InfoWindow key={key} position={{ lat: parseFloat(destinations?.[key]?.lat), lng: parseFloat(destinations?.[key]?.long) }} options={infoOptions}>
-										<div className="px-3 py-2 text-white">{key}</div>
-									</InfoWindow>)
+										<InfoWindow key={key} position={{ lat: parseFloat(destinations?.[key]?.lat), lng: parseFloat(destinations?.[key]?.long) }} options={infoOptions}>
+											<div className="px-3 py-2 text-white">{key}</div>
+										</InfoWindow>)
 								})
 							}
 
