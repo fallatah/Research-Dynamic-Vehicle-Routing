@@ -210,13 +210,11 @@ export default function Home() {
 		else {
 			let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
 
-			let tempTime = plan.totalKm / speed; // stopped here
+			console.log(plan)
 
 			setManualPlanDistance(Math.round(plan.totalKm * 10) / 10);
-			setManualPlanTime(tempTime);
+			setManualPlanTime(Math.round(plan.time * 10) / 10);
 			setManualPlanPath(plan.path);
-
-			console.log(plan?.path)
 
 			alert("✅ Planning Completed");
 		}
@@ -278,7 +276,10 @@ export default function Home() {
 			totalKm += distanceKm(fullRoute[i], fullRoute[i + 1]);
 		}
 
-		return { path: fullRoute, totalKm };
+		const totalTimeHrs = speed > 0 ? totalKm / speed : 0;
+  		const totalTimeMins = totalTimeHrs * 60;
+
+		return { path: fullRoute, totalKm:totalKm, time:totalTimeMins };
 	}
 
 	const calculatePathOptimized = (origin, destinations) => {
