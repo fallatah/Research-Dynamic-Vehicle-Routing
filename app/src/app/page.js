@@ -1,3 +1,6 @@
+//Change the color of the original point
+//Need cases to show average improvement in time
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -564,7 +567,6 @@ export default function Home() {
 
 			<div className="w-fit">
 				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5">Here is Your Plan</div>
 					<div className="w-[900px] h-[700px]">
 						<GoogleMap
 							id={"google-map-view"}
