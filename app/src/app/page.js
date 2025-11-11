@@ -1,6 +1,3 @@
-//Change the color of the original point
-//Need cases to show average improvement in time
-
 "use client";
 
 import { useState, useRef } from "react";
@@ -13,7 +10,11 @@ export default function Home() {
 	const mapLong = 46.698268964794934;
 
 	// Road speed in KPH
-	const [speed, setSpeed] = useState(20.0);
+	const [startingSpeed, setStartingSpeed] = useState(20.0);
+	const [speedForTrip1, setSpeedForTrip1] = useState(20.0);
+	const [speedForTrip2, setSpeedForTrip2] = useState(20.0);
+	const [speedForTrip3, setSpeedForTrip3] = useState(20.0);
+	const [speedForTrip4, setSpeedForTrip4] = useState(20.0);
 
 	// Depot
 	const [depot, setDepot] = useState({ lat: "", long: "" });
@@ -62,7 +63,7 @@ export default function Home() {
 		disableAutoPan: true,
 		boxStyle: {
 			content: "",
-			minWidth: "30px"
+			minWidth: "30px",
 		},
 		closeBoxURL: ""
 	};
@@ -75,8 +76,8 @@ export default function Home() {
 					type="text"
 					placeholder="Speed"
 					className="bg-white rounded p-2 border grow"
-					value={speed}
-					onChange={e => handleSpeedChange(e.target.value)}
+					value={startingSpeed}
+					onChange={e => handleSpeedChange("starting", e.target.value)}
 				/>
 			</div>
 			<div className="flex items-center gap-2 pb-2">
@@ -136,18 +137,34 @@ export default function Home() {
 		</div>
 	);
 
-	const handleSpeedChange = (value) =>
+	const handleSpeedChange = (id, value) =>
 	{
-		if (value === "") {
-			setSpeed("");
-			return;
+		let num = "";
+
+		if (value !== "") {
+			const parsed = Number(value);
+			num = Number.isInteger(parsed) && parsed >= 0 ? parsed : "";
 		}
 
-		const num = Number(value);
-
-		// accept only integers >= 0
-		if (Number.isInteger(num) && num >= 0) {
-			setSpeed(num);
+		if(id === "1")
+		{
+			setSpeedForTrip1(num);
+		}
+		else if(id === "2")
+		{
+			setSpeedForTrip2(num);
+		}
+		else if(id === "3")
+		{
+			setSpeedForTrip3(num);
+		}
+		else if(id === "4")
+		{
+			setSpeedForTrip4(num);
+		}
+		else
+		{
+			setStartingSpeed(num);
 		}
 	};
 
@@ -265,7 +282,7 @@ export default function Home() {
 		else {
 			let plan = calculatePathOptimized({ lat: depot?.lat, long: depot?.long }, points);
 
-			let tempTime = Math.round(((plan.totalKm / speed) * 60) * 10) / 10;
+			let tempTime = Math.round(((plan.totalKm / startingSpeed) * 60) * 10) / 10;
 
 			setOptimizedPlanDistance(Math.round(plan.totalKm * 10) / 10);
 			setOptimizedPlanTime(tempTime);
@@ -308,7 +325,7 @@ export default function Home() {
 			totalKm += distanceKm(fullRoute[i], fullRoute[i + 1]);
 		}
 
-		const totalTimeHrs = speed > 0 ? totalKm / speed : 0;
+		const totalTimeHrs = startingSpeed > 0 ? totalKm / startingSpeed : 0;
 		const totalTimeMins = totalTimeHrs * 60;
 
 		return { path: fullRoute, totalKm: totalKm, time: totalTimeMins };
@@ -404,7 +421,7 @@ export default function Home() {
 		}
 
 		// use global speed (in km/h)
-		const totalTimeHrs = speed > 0 ? totalKm / speed : 0;
+		const totalTimeHrs = startingSpeed > 0 ? totalKm / startingSpeed : 0;
 		const totalTimeMins = totalTimeHrs * 60;
 
 		return { path, totalKm, totalTimeHrs, totalTimeMins };
@@ -495,8 +512,8 @@ export default function Home() {
 							type="text"
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
-							defaultValue={speed}
-							onChange={e => handleSpeedChange(e.target.value)}
+							defaultValue={speedForTrip1}
+							onChange={e => handleSpeedChange("1", e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(1)}>
@@ -508,8 +525,8 @@ export default function Home() {
 							type="text"
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
-							defaultValue={speed}
-							onChange={e => handleSpeedChange(e.target.value)}
+							defaultValue={speedForTrip2}
+							onChange={e => handleSpeedChange("2", e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(2)}>
@@ -521,8 +538,8 @@ export default function Home() {
 							type="text"
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
-							defaultValue={speed}
-							onChange={e => handleSpeedChange(e.target.value)}
+							defaultValue={speedForTrip3}
+							onChange={e => handleSpeedChange("3", e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(3)}>
@@ -534,8 +551,8 @@ export default function Home() {
 							type="text"
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
-							defaultValue={speed}
-							onChange={e => handleSpeedChange(e.target.value)}
+							defaultValue={speedForTrip4}
+							onChange={e => handleSpeedChange("4", e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(4)}>
@@ -543,13 +560,7 @@ export default function Home() {
 						</button>
 					</div>
 					<div className="flex justify-end pt-2 gap-2">
-						<input
-							type="text"
-							placeholder="Speed"
-							className="bg-white rounded p-2 border w-20"
-							defaultValue={speed}
-							onChange={e => handleSpeedChange(e.target.value)}
-						/>
+
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(5)}>
 							Return to Depot
@@ -576,9 +587,10 @@ export default function Home() {
 							mapContainerStyle={{ width: '100%', height: '100%' }}
 							center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 						>
-							<Marker key={"point_depot"}>
-								<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions}>
-									<div className="px-[9px] py-2 text-white">⭐</div>
+							<Marker key={"point_depot"}
+							>
+								<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions} >
+									<div className="px-[9px] py-2 text-white" style={{backgroundColor:"#0000ff"}}>⭐</div>
 								</InfoWindow>
 							</Marker>
 
