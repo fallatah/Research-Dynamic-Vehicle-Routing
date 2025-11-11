@@ -15,6 +15,7 @@ export default function Home() {
 	const [speedForTrip2, setSpeedForTrip2] = useState(20.0);
 	const [speedForTrip3, setSpeedForTrip3] = useState(20.0);
 	const [speedForTrip4, setSpeedForTrip4] = useState(20.0);
+	const [speedForTrip5, setSpeedForTrip5] = useState(20.0);
 
 	// Depot
 	const [depot, setDepot] = useState({ lat: "", long: "" });
@@ -33,10 +34,15 @@ export default function Home() {
 	const [manualPlanTime, setManualPlanTime] = useState(undefined);
 	const [manualPlanPath, setManualPlanPath] = useState(undefined);
 
-	// Optimized Plan 
+	// Optimized Plan (unchaged)
 	const [optimizedPlanDistance, setOptimizedPlanDistance] = useState(undefined);
 	const [optimizedPlanTime, setOptimizedPlanTime] = useState(undefined);
 	const [optimizedPlanPath, setOptimizedPlanPath] = useState(undefined);
+
+	// Optimized Plan (changed)
+	const [optimizedPlanDistanceChanged, setOptimizedPlanDistanceChanged] = useState(undefined);
+	const [optimizedPlanTimeChanged, setOptimizedPlanTimeChanged] = useState(undefined);
+	const [optimizedPlanPathChanged, setOptimizedPlanPathChanged] = useState(undefined);
 
 	// Google Map & Its Properties
 	const mapRef = useRef(null);
@@ -146,21 +152,25 @@ export default function Home() {
 			num = Number.isInteger(parsed) && parsed >= 0 ? parsed : "";
 		}
 
-		if(id === "1")
+		if(id === 1)
 		{
 			setSpeedForTrip1(num);
 		}
-		else if(id === "2")
+		else if(id === 2)
 		{
 			setSpeedForTrip2(num);
 		}
-		else if(id === "3")
+		else if(id === 3)
 		{
 			setSpeedForTrip3(num);
 		}
-		else if(id === "4")
+		else if(id === 4)
 		{
 			setSpeedForTrip4(num);
+		}
+		else if(id === 5)
+		{
+			setSpeedForTrip5(num);
 		}
 		else
 		{
@@ -257,8 +267,6 @@ export default function Home() {
 		else {
 			let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
 
-			console.log(plan)
-
 			setManualPlanDistance(Math.round(plan.totalKm * 10) / 10);
 			setManualPlanTime(Math.round(plan.time * 10) / 10);
 			setManualPlanPath(plan.path);
@@ -287,8 +295,7 @@ export default function Home() {
 			setOptimizedPlanDistance(Math.round(plan.totalKm * 10) / 10);
 			setOptimizedPlanTime(tempTime);
 			setOptimizedPlanPath(plan.path);
-
-			console.log(plan.path)
+			setOptimizedPlanPathChanged(plan.path);
 
 			alert("✅ Planning Completed");
 		}
@@ -331,20 +338,21 @@ export default function Home() {
 		return { path: fullRoute, totalKm: totalKm, time: totalTimeMins };
 	}
 
+	// Haversine distance in km
+	const distanceKm = (a, b) => {
+		const R = 6371;
+		const toRad = x => (x * Math.PI) / 180;
+		const dLat = toRad(Number(b.lat) - Number(a.lat));
+		const dLon = toRad(Number(b.long) - Number(a.long));
+		const la1 = toRad(Number(a.lat));
+		const la2 = toRad(Number(b.lat));
+		const h =
+			Math.sin(dLat / 2) ** 2 +
+			Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+		return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+	};
+	
 	const calculatePathOptimized = (origin, destinations) => {
-		// Haversine distance in km
-		const distanceKm = (a, b) => {
-			const R = 6371;
-			const toRad = x => (x * Math.PI) / 180;
-			const dLat = toRad(Number(b.lat) - Number(a.lat));
-			const dLon = toRad(Number(b.long) - Number(a.long));
-			const la1 = toRad(Number(a.lat));
-			const la2 = toRad(Number(b.lat));
-			const h =
-				Math.sin(dLat / 2) ** 2 +
-				Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
-			return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-		};
 
 		if (!origin || !Array.isArray(destinations) || destinations.length === 0) {
 			const labeledOrigin = { ...origin, label: "origin" };
@@ -427,16 +435,30 @@ export default function Home() {
 		return { path, totalKm, totalTimeHrs, totalTimeMins };
 	};
 
-	const simulateTrip = (tripNumber) => {
+	const getTimeForLeg = (path, legIdx, speed) =>
+	{
+		if (!Array.isArray(path) || path.length < 2) return 0;
+		const i0 = legIdx - 1;
 
-		if(manualPlanPath?.[tripNumber-1]?.label && optimizedPlanPath?.[tripNumber-1]?.label)
-		{
-			alert(`🚙 Manual is traveling from ${manualPlanPath?.[tripNumber-1]?.label} -> ${manualPlanPath?.[tripNumber]?.label}\n🚗 Heuristic is traveling from ${optimizedPlanPath?.[tripNumber-1]?.label} -> ${optimizedPlanPath?.[tripNumber]?.label}`);
+		if (i0 < 0 || i0 >= path.length - 1) return 0;
+		const km = distanceKm(path[i0], path[i0 + 1]);
+		if (!Number.isFinite(speed) || speed <= 0) return 0;
+		return (km / speed) * 60;
+
+	};
+
+	const simulateTrip = (legIdx) => {
+
+		if (!Array.isArray(manualPlanPath) || !Array.isArray(optimizedPlanPath)) {
+			alert("❌ You should do both planning");
+			return;
 		}
-		else
-		{
-			alert("❌ You should plan both trips");
-		}
+
+		let speed = (legIdx === 1) ? Number(speedForTrip1) : (legIdx === 2) ? Number(speedForTrip2) : (legIdx === 3) ? Number(speedForTrip3) : (legIdx === 4) ? Number(speedForTrip4) : (legIdx === 5) ? Number(speedForTrip5) : 0;
+
+		const t = getTimeForLeg(optimizedPlanPathChanged, legIdx, speed);
+
+		alert("From " + optimizedPlanPathChanged[legIdx-1]?.label + " to " + optimizedPlanPathChanged[legIdx]?.label + " => " + t)
 	};
 
 	const simulateEndTrip = () =>{
@@ -513,7 +535,7 @@ export default function Home() {
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
 							defaultValue={speedForTrip1}
-							onChange={e => handleSpeedChange("1", e.target.value)}
+							onChange={e => handleSpeedChange(1, e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(1)}>
@@ -526,7 +548,7 @@ export default function Home() {
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
 							defaultValue={speedForTrip2}
-							onChange={e => handleSpeedChange("2", e.target.value)}
+							onChange={e => handleSpeedChange(2, e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(2)}>
@@ -539,7 +561,7 @@ export default function Home() {
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
 							defaultValue={speedForTrip3}
-							onChange={e => handleSpeedChange("3", e.target.value)}
+							onChange={e => handleSpeedChange(3, e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(3)}>
@@ -552,7 +574,7 @@ export default function Home() {
 							placeholder="Speed"
 							className="bg-white rounded p-2 border w-20"
 							defaultValue={speedForTrip4}
-							onChange={e => handleSpeedChange("4", e.target.value)}
+							onChange={e => handleSpeedChange(4, e.target.value)}
 						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(4)}>
@@ -560,7 +582,13 @@ export default function Home() {
 						</button>
 					</div>
 					<div className="flex justify-end pt-2 gap-2">
-
+						<input
+							type="text"
+							placeholder="Speed"
+							className="bg-white rounded p-2 border w-20"
+							defaultValue={speedForTrip5}
+							onChange={e => handleSpeedChange(5, e.target.value)}
+						/>
 						<div className="p-3">km</div>
 						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(5)}>
 							Return to Depot
