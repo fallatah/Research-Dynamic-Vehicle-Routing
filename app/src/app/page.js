@@ -365,20 +365,23 @@ export default function Home() {
 			location: { latLng: { latitude: lat, longitude: lng } }
 		});
 
-		let temp = [];
+		let intermediates = [];
+		let unorderedDestinations = [];
 
 		Object.keys(destinations)?.forEach(key => {
-			temp.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+			intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+			unorderedDestinations.push({...{label:key}, ...destinations?.[key]})
 		});
 
 		const body = {
 			origin: toWaypoint([depot?.lat, depot?.long]),
 			destination: toWaypoint([depot?.lat, depot?.long]),
-			intermediates: temp,
+			intermediates: intermediates,
 			travelMode: "DRIVE",
 			routingPreference: "TRAFFIC_AWARE",
 			languageCode: "en-US",
-			units: "METRIC"
+			units: "METRIC",
+			optimizeWaypointOrder:"true"
 		};
 
 		const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",
@@ -387,27 +390,28 @@ export default function Home() {
 			headers: {
 			"Content-Type": "application/json",
 			"X-Goog-Api-Key": process.env.NEXT_PUBLIC_MAP_API_KEY,
-			"X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline"
+			"X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.optimizedIntermediateWaypointIndex"
 			},
 			body: JSON.stringify(body)
 		});
 
   		const data = await res.json();
-		const route = data.routes[0];
 
-		const navigation = {
-			distanceMeters: route.distanceMeters,
-			duration: route.duration,
-			polyline: {
-			encodedPolyline: route.polyline.encodedPolyline
-			}
-		};
-
-		console.log(navigation)
-
-		alert("✅ Planning Completed");
-
-		return navigation;
+		if(data?.routes[0])
+		{
+			const route = data.routes[0];
+	
+			let distance = route.distanceMeters * 0.001;
+			let duration = Math.floor(parseInt(route?.duration?.replace("s", ""), 10)/60);
+			let polyline = route.polyline.encodedPolyline;
+			let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => unorderedDestinations?.[i]);
+			
+			alert("✅ Planning Completed");
+		}
+		else
+		{
+			alert("❌ Failed to reach Google Server");
+		}
 	};
 
 	// Helper: Validate Coordinates of any given destination (point)
