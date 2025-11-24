@@ -174,7 +174,7 @@ export default function Home() {
 				onChange={e => handleSpeedChange(id, e.target.value)}
 			/>	
 			<div className="p-3">km</div>
-			<button className="bg-amber-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id)}>
+			<button className="bg-black text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id)}>
 				Simulate
 			</button>
 		</div>
@@ -464,7 +464,7 @@ export default function Home() {
 								{renderPlanningInput(2, "Trip 3", "manual", false)}
 								{renderPlanningInput(3, "Trip 4", "manual", false)}	
 							</div>
-							<div className="font-bold bg-amber-100 p-4">						
+							<div className="bg-amber-100 p-4">												
 								<div className="flex justify-end pt-2">
 									<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 										Plan
@@ -485,7 +485,7 @@ export default function Home() {
 								{renderPlanningInput(2, "Trip 3", "optimized", true)}
 								{renderPlanningInput(3, "Trip 4", "optimized", true)}	
 							</div>
-							<div className="font-bold bg-amber-100 p-4">												
+							<div className="bg-amber-100 p-4">												
 								<div className="flex justify-end pt-2">
 									<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 										Plan
