@@ -44,8 +44,8 @@ export default function Home() {
 
 
 	// Manual Plan
-	const [manualPlan, setManualPlanInput] = useState([]);
-	const [optimizedPlan, setOptimizedPlanInput] = useState([]);
+	const [manualPlan, setManualPlan] = useState([]);
+	const [optimizedPlan, setOptimizedPlan] = useState([]);
 
 
 
@@ -239,7 +239,7 @@ export default function Home() {
 
 	// Handle  Planning Input Change
 	const handlePlanningInputChange = (index, value) => {
-		setManualPlanInput(prev => {
+		setManualPlan(prev => {
 			const updated = [...prev];
 			updated[index] = value;
 			return updated;
@@ -370,7 +370,7 @@ export default function Home() {
 
 		Object.keys(destinations)?.forEach(key => {
 			intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
-			unorderedDestinations.push({...{label:key}, ...destinations?.[key]})
+			unorderedDestinations.push(key)
 		});
 
 		const body = {
@@ -405,6 +405,11 @@ export default function Home() {
 			let duration = Math.floor(parseInt(route?.duration?.replace("s", ""), 10)/60);
 			let polyline = route.polyline.encodedPolyline;
 			let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => unorderedDestinations?.[i]);
+
+			console.log(manualPlan)
+			console.log(newOrder)
+
+			setOptimizedPlan(newOrder);
 			
 			alert("✅ Planning Completed");
 		}
