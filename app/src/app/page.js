@@ -335,7 +335,18 @@ export default function Home() {
 	// Simulate
 	const simulate = (trip) =>
 	{
+		if (!isValideManualPlanning()) {
+			alert("❌ You should plan manually first");
+		}
+		else if (!isValideOptimizedPlanning()) {
+			alert("❌ You should plan with optimization first");
+		}		
+		else {
 
+			// To Do
+
+			alert("✅ Simulation Completed");
+		}
 	};
 
 
@@ -370,10 +381,18 @@ export default function Home() {
 	// Helper: Validate Manual Planning
 	const isValideManualPlanning = () =>
 	{
-
 		const uniqueValues = new Set(manualPlan.filter(v => v !== "" && v != null));
 
 		return (Array.isArray(manualPlan) && manualPlan.length === 4 && uniqueValues.size === manualPlan.length)
+	};
+
+
+	// Helper: Validate Optimized Planning
+	const isValideOptimizedPlanning = () =>
+	{
+		const uniqueValues = new Set(optimizedPlan.filter(v => v !== "" && v != null));
+
+		return (Array.isArray(optimizedPlan) && optimizedPlan.length === 4 && uniqueValues.size === optimizedPlan.length)
 	};
 
 
