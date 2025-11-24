@@ -70,19 +70,33 @@ export default function Home() {
 	});
 
 
-    const fenceOptions =
+    const manualPolylineOptions =
     {
-        fillColor: "#000000",
-        strokeColor: "#000000",
-        fillOpacity: 0,
+        fillColor: "#53A000",
+        strokeColor: "#53A000",
+        fillOpacity: 1,
         strokeOpacity: 1,
-        strokeWeight: 3,
+        strokeWeight: 5,
         clickable: false,
         draggable: false,
         editable: false,
         geodesic: false,
         zIndex: 1,
     };
+
+    const optimizedPolylineOptions =
+    {
+        fillColor: "#0000ff",
+        strokeColor: "#0000ff",
+        fillOpacity: 1,
+        strokeOpacity: 1,
+        strokeWeight: 5,
+        clickable: false,
+        draggable: false,
+        editable: false,
+        geodesic: false,
+        zIndex: 1,
+    };	
 
 	const mapOptions = {
 		zoomControl: false,
@@ -306,11 +320,20 @@ export default function Home() {
 	// Plan Manually
 	const planManually = () =>
 	{
-		let points = [];
+		let distance = 0;
+		let time	 = 0;
+		let points   = [];
+		let polyline = [];
+
+		polyline.push({ lat: parseFloat(depot.lat), lng: parseFloat(depot.long) });
 
 		manualPlan?.forEach(key => {
 			points.push({ label: key, lat: destinations?.[key]?.lat, long: destinations?.[key]?.long })
+			
+			polyline.push({ lat: parseFloat(destinations?.[key]?.lat), lng: parseFloat(destinations?.[key]?.long) });
 		});
+
+		polyline.push({ lat: parseFloat(depot.lat), lng: parseFloat(depot.long) });
 
 		if (!isValideSetOfCoordinates([...[{ label:"Depot", lat: depot?.lat, long: depot?.long }], ...points])) {
 			alert("❌ Invalid Latitude/Longitude Values");
@@ -319,10 +342,6 @@ export default function Home() {
 			alert("❌ You have to select 4 different destinations");
 		}
 		else {
-
-			let distance = 0;
-			let time	 = 0;
-			let polyline = "";
 
 			distance = calculateDistanceBetweenMultiPoints({ lat: depot?.lat, long: depot?.long }, points);
 			
@@ -389,7 +408,7 @@ export default function Home() {
 			destination: toWaypoint([depot?.lat, depot?.long]),
 			intermediates: intermediates,
 			travelMode: "DRIVE",
-			routingPreference: "TRAFFIC_AWARE",
+			// routingPreference: "TRAFFIC_AWARE",
 			languageCode: "en-US",
 			units: "METRIC",
 			optimizeWaypointOrder:"true"
@@ -545,8 +564,6 @@ export default function Home() {
 		return totalTimeMins;
 	};
 
-
-
 	// Render FULL HTML
 	return isLoaded ? (
 		<div className="flex flex-col gap-5 p-5">
@@ -569,17 +586,24 @@ export default function Home() {
 					mapContainerStyle={{ width: '100%', height: '100%' }}
 					center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 				>
-					{(OptimizedPlanData?.polyline)
+					{(manualPlanData?.polyline)
 					?
-						<Polyline path={OptimizedPlanData?.polyline} options={fenceOptions}/>
+						<Polyline path={manualPlanData?.polyline} options={manualPolylineOptions}/>
 					:
 						null
 					}
 
+					{(OptimizedPlanData?.polyline)
+					?
+						<Polyline path={OptimizedPlanData?.polyline} options={optimizedPolylineOptions}/>
+					:
+						null
+					}					
+
 					<Marker key={"point_depot"}
 					>
 						<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions} >
-							<div className="px-[9px] py-2 text-white" style={{backgroundColor:"#0000ff"}}>⭐</div>
+							<div className="px-[9px] py-2 text-white" style={{backgroundColor:"#000000"}}>⭐</div>
 						</InfoWindow>
 					</Marker>
 
@@ -617,7 +641,7 @@ export default function Home() {
 							</div>
 							<div className="grow bg-amber-100 px-4 pb-4">
 								<div className="flex justify-end pt-2">
-									<button onClick={generateSampleLocations} className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
+									<button onClick={generateSampleLocations} className="bg-black text-white px-4 py-2 rounded cursor-pointer">
 										Generate Sample
 									</button>
 								</div>
@@ -720,7 +744,7 @@ export default function Home() {
 							</div>
 							<div className="bg-amber-100 px-4 pb-4">												
 								<div className="flex justify-end pt-2">
-									<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
+									<button onClick={planOptimized} className="bg-blue-600 text-white px-8 py-2 rounded cursor-pointer">
 										Plan
 									</button>
 								</div>										
