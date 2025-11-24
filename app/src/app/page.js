@@ -296,13 +296,24 @@ export default function Home() {
 		}
 		else {
 
-			// let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
+			let distance = 0;
+			let time	 = 0;
 
-			// setManualPlanDistance(Math.round(plan.totalKm * 10) / 10);
-			// setManualPlanTime(Math.round(plan.time * 10) / 10);
-			// setManualPlanPath(plan.path);
+			distance = calculateDistanceBetweenMultiPoints({ lat: depot?.lat, long: depot?.long }, points);
+			
+			if(typeof startingSpeed === 'number' && startingSpeed > 0)
+			{
+				if(distance > 0)
+				{
+					time = calculateTravelTimeInMinutes(distance, startingSpeed);
+				}
 
-			alert("✅ Planning Completed");
+				alert(`✅ Planning Completed\n\n📍 Route: Depot -> ${points?.[0]?.label} -> ${points?.[1]?.label} -> ${points?.[2]?.label} -> ${points?.[3]?.label} -> Depot\n🚚 Distance: ${Math.round(distance*100)/100} km\n🕒 Time: ${Math.round(time*100)/100} min\n🛞 Avg. Speed: ${startingSpeed} kph`);
+			}
+			else
+			{
+				alert("❌ Invalid starting speed");
+			}
 		}
 	}
 
@@ -393,6 +404,56 @@ export default function Home() {
 		const uniqueValues = new Set(optimizedPlan.filter(v => v !== "" && v != null));
 
 		return (Array.isArray(optimizedPlan) && optimizedPlan.length === 4 && uniqueValues.size === optimizedPlan.length)
+	};
+
+
+
+	// Helper: Calculate Distance in KM Between Multiple Points
+	const calculateDistanceBetweenMultiPoints = (origin, destinations) =>
+	{
+		if (!origin || !Array.isArray(destinations) || destinations.length === 0) {
+			return 0;
+		}
+
+		// Build full route (start + all destinations + return to origin)
+		const fullRoute = [origin, ...destinations, origin];
+		
+		let totalKm = 0;
+
+		for (let i = 0; i < fullRoute.length - 1; i++)
+		{
+			totalKm += calculateDistanceBetweenTwoPoints(fullRoute[i], fullRoute[i + 1]);
+		}
+
+		return totalKm;
+	}
+
+
+
+	// Helper: Calculate Distance in KM Between 2 Points
+	const calculateDistanceBetweenTwoPoints = (a, b) =>
+	{
+		const R = 6371;
+		const toRad = x => (x * Math.PI) / 180;
+		const dLat = toRad(Number(b.lat) - Number(a.lat));
+		const dLon = toRad(Number(b.long) - Number(a.long));
+		const la1 = toRad(Number(a.lat));
+		const la2 = toRad(Number(b.lat));
+		const h =
+			Math.sin(dLat / 2) ** 2 +
+			Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+		return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+	};	
+
+
+
+	// Helper: Calculate Travel Time
+	const calculateTravelTimeInMinutes = (distance, speed) =>
+	{
+		const totalTimeHrs = speed > 0 ? distance / speed : 0;
+		const totalTimeMins = totalTimeHrs * 60;
+
+		return totalTimeMins;
 	};
 
 
