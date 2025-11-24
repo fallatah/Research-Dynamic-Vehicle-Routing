@@ -1,3 +1,8 @@
+// find references that this approcah is not usable
+// generate sample data 
+// write the senario with high-quality screenshots and show the actual alghorithim
+// look at the IEEE template
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -5,9 +10,13 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 
 export default function Home() {
 
+
+
 	// Set PSU to be Depot :)
 	const mapLat = 24.737513266445525;
-	const mapLong = 46.698268964794934;
+	const mapLong = 46.698268964794934;	
+
+
 
 	// Road speed in KPH
 	const [startingSpeed, setStartingSpeed] = useState(20.0);
@@ -16,11 +25,15 @@ export default function Home() {
 	const [speedForTrip3, setSpeedForTrip3] = useState(20.0);
 	const [speedForTrip4, setSpeedForTrip4] = useState(20.0);
 	const [speedForTrip5, setSpeedForTrip5] = useState(20.0);
+	
+	
 
-	// Depot
-	const [depot, setDepot] = useState({ lat: "", long: "" });
+	// Depot Info
+	const [depot, setDepot] = useState({ lat: mapLat, long: mapLong });
 
-	// Destinations A–D
+
+
+	// Destinations A–D Info
 	const [destinations, setDestinations] = useState({
 		A: { lat: "", long: "" },
 		B: { lat: "", long: "" },
@@ -28,30 +41,22 @@ export default function Home() {
 		D: { lat: "", long: "" },
 	});
 
-	// Manual Plan 
-	const [manualPlan, setManualPlan] = useState([]);
-	const [manualPlanDistance, setManualPlanDistance] = useState(undefined);
-	const [manualPlanTime, setManualPlanTime] = useState(undefined);
-	const [manualPlanPath, setManualPlanPath] = useState(undefined);
 
-	// Optimized Plan (unchaged)
-	const [optimizedPlanDistance, setOptimizedPlanDistance] = useState(undefined);
-	const [optimizedPlanTime, setOptimizedPlanTime] = useState(undefined);
-	const [optimizedPlanPath, setOptimizedPlanPath] = useState(undefined);
 
-	// Optimized Plan (changed)
-	const [optimizedPlanDistanceChanged, setOptimizedPlanDistanceChanged] = useState(undefined);
-	const [optimizedPlanTimeChanged, setOptimizedPlanTimeChanged] = useState(undefined);
-	const [optimizedPlanPathChanged, setOptimizedPlanPathChanged] = useState(undefined);
+	// Manual Plan
+	const [manualPlan, setManualPlanInput] = useState([]);
+	const [optimizedPlan, setOptimizedPlanInput] = useState([]);
 
-	// Google Map & Its Properties
+
+
+	// Google Map Setup
 	const mapRef = useRef(null);
 
 	const { isLoaded } = useJsApiLoader(
-		{
-			id: "google-map-view",
-			googleMapsApiKey: `${process.env.NEXT_PUBLIC_MAP_API_KEY}`
-		});
+	{
+		id: "google-map-view",
+		googleMapsApiKey: `${process.env.NEXT_PUBLIC_MAP_API_KEY}`
+	});
 
 	const mapOptions = {
 		zoomControl: false,
@@ -72,16 +77,19 @@ export default function Home() {
 			minWidth: "30px",
 		},
 		closeBoxURL: ""
-	};
+	};	
 
-	const renderDepot = () => (
+
+	
+	// Render Depot & Initial Speed
+	const renderDepotAndInitialSpeed = () => (
 		<>
 			<div className="flex items-center gap-2 pb-2">
 				<div className="w-32 whitespace-nowrap">Speed Limit (km):</div>
 				<input
 					type="text"
 					placeholder="Speed"
-					className="bg-white rounded p-2 border grow"
+					className="bg-white rounded p-2 border w-24"
 					value={startingSpeed}
 					onChange={e => handleSpeedChange("starting", e.target.value)}
 				/>
@@ -98,14 +106,17 @@ export default function Home() {
 				<input
 					type="text"
 					placeholder="Longitude"
-					className="bg-white rounded p-2 border"
+					className="bg-white rounded p-2 border grow"
 					value={depot.long}
 					onChange={e => handleDepotChange("long", e.target.value)}
 				/>
 			</div>			
 		</>
 	);
-
+	
+	
+	
+	// Render Long & Lat for Each Destination
 	const renderDestinationInput = (id, label) => (
 		<div className="flex items-center gap-2 pb-2">
 			<div className="w-32 whitespace-nowrap">{label}:</div>
@@ -124,17 +135,21 @@ export default function Home() {
 				onChange={e => handleDestinationChange(id, "long", e.target.value)}
 			/>
 		</div>
-	);
+	);	
 
-	const renderManualPlanningInput = (id, label) => (
+
+
+	// Render Manual Planning Input
+	const renderPlanningInput = (id, label, isReadOnly) => (
 		<div className="flex items-center gap-2 pb-2">
 			<div className="w-32 whitespace-nowrap">{label}:</div>
 			<select
-				className="grow bg-white rounded p-2 border"
+				className={`grow bg-white rounded p-2 border ${(isReadOnly) ? "opacity-50" : ""}`}
 				value={manualPlan?.[id] ?? ""}
-				onChange={e => handleManualPlanChange(id, e.target.value)}
+				onChange={e => handlePlanningInputChange(id, e.target.value)}
+				disabled={isReadOnly}
 			>
-				<option value="">Select option</option>
+				<option value="">{(isReadOnly) ? "TBD" : "Select"}</option>
 				<option value="A">A</option>
 				<option value="B">B</option>
 				<option value="C">C</option>
@@ -143,11 +158,15 @@ export default function Home() {
 		</div>
 	);
 
+
+
+	// Handle Speed Cahnge
 	const handleSpeedChange = (id, value) =>
 	{
 		let num = "";
 
-		if (value !== "") {
+		if (value !== "")
+		{
 			const parsed = Number(value);
 			num = Number.isInteger(parsed) && parsed >= 0 ? parsed : "";
 		}
@@ -178,10 +197,16 @@ export default function Home() {
 		}
 	};
 
+
+
+	// Handle Depot Cahnge
 	const handleDepotChange = (key, value) => {
 		setDepot(prev => ({ ...prev, [key]: value }));
 	};
 
+
+
+	// Handle Destination Cahnge
 	const handleDestinationChange = (id, key, value) => {
 		setDestinations(prev => ({
 			...prev,
@@ -189,16 +214,105 @@ export default function Home() {
 		}));
 	};
 
-	const handleManualPlanChange = (index, value) => {
-		setManualPlan(prev => {
+
+
+	// Handle  Planning Input Change
+	const handlePlanningInputChange = (index, value) => {
+		setManualPlanInput(prev => {
 			const updated = [...prev];
 			updated[index] = value;
 			return updated;
 		});
 	};
+	
+	
 
-	const isValideSetOfCoordinates = (points) => {
+	// Generate Sample Locations
+	const generateSampleLocations = () => {
 
+		// Scroll to top of page to view the map
+		window.scrollTo({ top: 0, behavior: "smooth" });
+
+		
+		// Set depot location to PSU :)
+		handleDepotChange("lat", mapLat);
+		handleDepotChange("long", mapLong);
+
+
+		// Pick points near the depot for a realistic cluster
+		const baseLat = parseFloat(mapLat);
+		const baseLong = parseFloat(mapLong);
+		const jitter = () => (Math.random() - 0.5) * 0.2; // about ±0.1 deg
+
+
+		handleDestinationChange("A", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("A", "long", (baseLong + jitter()).toFixed(6));
+		handleDestinationChange("B", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("B", "long", (baseLong + jitter()).toFixed(6));
+		handleDestinationChange("C", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("C", "long", (baseLong + jitter()).toFixed(6));
+		handleDestinationChange("D", "lat", (baseLat + jitter()).toFixed(6));
+		handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
+	};
+
+
+
+	// Plan Manually
+	const planManually = () =>
+	{
+		let points = [];
+
+		manualPlan?.forEach(key => {
+			points.push({ label: key, lat: destinations?.[key]?.lat, long: destinations?.[key]?.long })
+		});
+
+		if (!isValideSetOfCoordinates([...[{ label:"Depot", lat: depot?.lat, long: depot?.long }], ...points])) {
+			alert("❌ Invalid Latitude/Longitude Values");
+		}
+		else if (!isValideManualPlanning()) {
+			alert("❌ You have to select 4 different destinations");
+		}
+		else {
+
+			// let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
+
+			// setManualPlanDistance(Math.round(plan.totalKm * 10) / 10);
+			// setManualPlanTime(Math.round(plan.time * 10) / 10);
+			// setManualPlanPath(plan.path);
+
+			alert("✅ Planning Completed");
+		}
+	}
+
+
+
+	// Plan Optimized
+	const planOptimized = () =>
+	{
+		let points = [];
+
+		points.push({label:"Depot", lat: depot?.lat, long: depot?.long });
+
+		Object.keys(destinations)?.forEach(key => {
+			points.push({ label: key, lat: destinations?.[key]?.lat, long: destinations?.[key]?.long })
+		});
+
+		if (!isValideSetOfCoordinates(points)) {
+			alert("❌ Invalid Latitude/Longitude Values");
+		}
+		else {
+
+			// To Do
+			
+			alert("✅ Planning Completed");
+		}
+	}	
+
+
+
+	// Helper: Validate Coordinates of any given destination (point)
+	const isValideSetOfCoordinates = (points) =>
+	{
 		let errorsFound = 0;
 
 		points.forEach((p, i) => {
@@ -220,422 +334,126 @@ export default function Home() {
 
 		return (errorsFound === 0);
 	};
+	
+	
 
-	const isValideManualPlanning = () => {
+	// Helper: Validate Manual Planning
+	const isValideManualPlanning = () =>
+	{
 
 		const uniqueValues = new Set(manualPlan.filter(v => v !== "" && v != null));
 
 		return (Array.isArray(manualPlan) && manualPlan.length === 4 && uniqueValues.size === manualPlan.length)
 	};
 
-	const generateSampleData = () => {
 
-		window.scrollTo({ top: 0, behavior: "smooth" });
 
-		handleDepotChange("lat", mapLat);
-		handleDepotChange("long", mapLong);
-
-		// Points near the depot for a realistic cluster
-		const baseLat = parseFloat(mapLat);
-		const baseLong = parseFloat(mapLong);
-		const jitter = () => (Math.random() - 0.5) * 0.2; // about ±0.1 deg
-
-		handleDestinationChange("A", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("A", "long", (baseLong + jitter()).toFixed(6));
-		handleDestinationChange("B", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("B", "long", (baseLong + jitter()).toFixed(6));
-		handleDestinationChange("C", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("C", "long", (baseLong + jitter()).toFixed(6));
-		handleDestinationChange("D", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
-	};
-
-	const planManually = () => {
-
-		let points = [];
-
-		manualPlan?.forEach(key => {
-			points.push({ label: key, lat: destinations?.[key]?.lat, long: destinations?.[key]?.long })
-		});
-
-		if (!isValideSetOfCoordinates([...[{ lat: depot?.lat, long: depot?.long }], ...points])) {
-			alert("❌ Invalid Latitude/Longitude Values");
-		}
-		else if (!isValideManualPlanning()) {
-			alert("❌ You have to select 4 different destinations");
-		}
-		else {
-			let plan = calculatePath({ lat: depot?.lat, long: depot?.long }, points);
-
-			setManualPlanDistance(Math.round(plan.totalKm * 10) / 10);
-			setManualPlanTime(Math.round(plan.time * 10) / 10);
-			setManualPlanPath(plan.path);
-
-			alert("✅ Planning Completed");
-		}
-	}
-
-	const planWithOptimization = () => {
-
-		let points = [];
-
-		points.push({ lat: destinations?.A?.lat, long: destinations?.A?.long });
-		points.push({ lat: destinations?.B?.lat, long: destinations?.B?.long });
-		points.push({ lat: destinations?.C?.lat, long: destinations?.C?.long });
-		points.push({ lat: destinations?.D?.lat, long: destinations?.D?.long });
-
-		if (!isValideSetOfCoordinates([...[{ lat: depot?.lat, long: depot?.long }], ...points])) {
-			alert("❌ Invalid Latitude/Longitude Values");
-		}
-		else {
-			let plan = calculatePathOptimized({ lat: depot?.lat, long: depot?.long }, points);
-
-			let tempTime = Math.round(((plan.totalKm / startingSpeed) * 60) * 10) / 10;
-
-			setOptimizedPlanDistance(Math.round(plan.totalKm * 10) / 10);
-			setOptimizedPlanTime(tempTime);
-			setOptimizedPlanPath(plan.path);
-			setOptimizedPlanPathChanged(plan.path);
-
-			alert("✅ Planning Completed");
-		}
-	}
-
-	const calculatePath = (origin, destinations) => {
-
-		// inline distance in km using Haversine
-		const distanceKm = (a, b) => {
-			const R = 6371;
-			const toRad = x => (x * Math.PI) / 180;
-			const dLat = toRad(Number(b.lat) - Number(a.lat));
-			const dLon = toRad(Number(b.long) - Number(a.long));
-			const la1 = toRad(Number(a.lat));
-			const la2 = toRad(Number(b.lat));
-			const h =
-				Math.sin(dLat / 2) ** 2 +
-				Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
-			return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-		};
-
-		if (!origin || !Array.isArray(destinations) || destinations.length === 0) {
-			return { path: [origin, ...(destinations || [])], totalKm: 0 };
-		}
-
-		// Ensure origin has a label
-		const labeledOrigin = { ...origin, label: "origin" };
-
-		// Build full route (start + all destinations + return to origin)
-		const fullRoute = [labeledOrigin, ...destinations, labeledOrigin];
-		let totalKm = 0;
-
-		for (let i = 0; i < fullRoute.length - 1; i++) {
-			totalKm += distanceKm(fullRoute[i], fullRoute[i + 1]);
-		}
-
-		const totalTimeHrs = startingSpeed > 0 ? totalKm / startingSpeed : 0;
-		const totalTimeMins = totalTimeHrs * 60;
-
-		return { path: fullRoute, totalKm: totalKm, time: totalTimeMins };
-	}
-
-	// Haversine distance in km
-	const distanceKm = (a, b) => {
-		const R = 6371;
-		const toRad = x => (x * Math.PI) / 180;
-		const dLat = toRad(Number(b.lat) - Number(a.lat));
-		const dLon = toRad(Number(b.long) - Number(a.long));
-		const la1 = toRad(Number(a.lat));
-		const la2 = toRad(Number(b.lat));
-		const h =
-			Math.sin(dLat / 2) ** 2 +
-			Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
-		return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-	};
-	
-	const calculatePathOptimized = (origin, destinations) => {
-
-		if (!origin || !Array.isArray(destinations) || destinations.length === 0) {
-			const labeledOrigin = { ...origin, label: "origin" };
-			const path = [labeledOrigin, labeledOrigin];
-			return { path, totalKm: 0, totalTimeHrs: 0, totalTimeMins: 0 };
-		}
-
-		// Ensure labels for all points
-		const labeledOrigin = { ...origin, label: "origin" };
-		const labeledDestinations = destinations.map((d, i) => ({
-			...d,
-			label: d.label || String.fromCharCode(65 + i), // A, B, C...
-		}));
-
-		// 1) Nearest neighbor seed
-		const remaining = labeledDestinations.slice();
-		const tour = [];
-		let current = labeledOrigin;
-
-		while (remaining.length) {
-			let bestIdx = 0;
-			let bestDist = Infinity;
-			for (let i = 0; i < remaining.length; i++) {
-				const d = remaining[i];
-				const dist = distanceKm(current, d);
-				if (dist < bestDist) {
-					bestDist = dist;
-					bestIdx = i;
-				}
-			}
-			const next = remaining.splice(bestIdx, 1)[0];
-			tour.push(next);
-			current = next;
-		}
-
-		// 2) 2-opt improvement with fixed start at origin
-		const twoOpt = pts => {
-			const n = pts.length;
-			if (n < 3) return pts.slice();
-			let route = pts.slice();
-			let improved = true;
-
-			while (improved) {
-				improved = false;
-				for (let i = 0; i < n - 1; i++) {
-					const Aprev = i === 0 ? labeledOrigin : route[i - 1];
-					const A = route[i];
-					for (let k = i + 1; k < n; k++) {
-						const B = route[k];
-						const Bnext = k === n - 1 ? null : route[k + 1];
-
-						const currentCost = distanceKm(Aprev, A) + (Bnext ? distanceKm(B, Bnext) : 0);
-						const swappedCost = distanceKm(Aprev, B) + (Bnext ? distanceKm(A, Bnext) : 0);
-
-						if (swappedCost + 1e-9 < currentCost) {
-							const reversed = route.slice(i, k + 1).reverse();
-							route.splice(i, reversed.length, ...reversed);
-							improved = true;
-						}
-					}
-				}
-			}
-			return route;
-		};
-
-		const improved = twoOpt(tour);
-
-		// 3) Close the tour by returning to origin and compute totals
-		const path = [labeledOrigin, ...improved, labeledOrigin];
-
-		let totalKm = 0;
-		for (let i = 0; i < path.length - 1; i++) {
-			totalKm += distanceKm(path[i], path[i + 1]);
-		}
-
-		// use global speed (in km/h)
-		const totalTimeHrs = startingSpeed > 0 ? totalKm / startingSpeed : 0;
-		const totalTimeMins = totalTimeHrs * 60;
-
-		return { path, totalKm, totalTimeHrs, totalTimeMins };
-	};
-
-	const getTimeForLeg = (path, legIdx, speed) =>
-	{
-		if (!Array.isArray(path) || path.length < 2) return 0;
-		const i0 = legIdx - 1;
-
-		if (i0 < 0 || i0 >= path.length - 1) return 0;
-		const km = distanceKm(path[i0], path[i0 + 1]);
-		if (!Number.isFinite(speed) || speed <= 0) return 0;
-		return (km / speed) * 60;
-
-	};
-
-	const simulateTrip = (legIdx) => {
-
-		if (!Array.isArray(manualPlanPath) || !Array.isArray(optimizedPlanPath)) {
-			alert("❌ You should do both planning");
-			return;
-		}
-
-		let speed = (legIdx === 1) ? Number(speedForTrip1) : (legIdx === 2) ? Number(speedForTrip2) : (legIdx === 3) ? Number(speedForTrip3) : (legIdx === 4) ? Number(speedForTrip4) : (legIdx === 5) ? Number(speedForTrip5) : 0;
-
-		const t = getTimeForLeg(optimizedPlanPathChanged, legIdx, speed);
-
-		alert("From " + optimizedPlanPathChanged[legIdx-1]?.label + " to " + optimizedPlanPathChanged[legIdx]?.label + " => " + t)
-	};
-
-	const simulateEndTrip = () =>{
-			alert(`🚙 Manual ran ${0}km and took ${0} minutes\n🚗 Heuristic  ran ${0}km and took ${0} minutes`);
-	};
-
+	// Render FULL HTML
 	return isLoaded ? (
-		<div className="flex items-top gap-2 p-5">
+		<div className="flex flex-col gap-5 p-5">
+			<div className="w-full h-[450px]">
+				<GoogleMap
+					id={"google-map-view"}
+					zoom={11}
+					ref={mapRef}
+					options={mapOptions}
+					mapContainerStyle={{ width: '100%', height: '100%' }}
+					center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
+				>
+					<Marker key={"point_depot"}
+					>
+						<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions} >
+							<div className="px-[9px] py-2 text-white" style={{backgroundColor:"#0000ff"}}>⭐</div>
+						</InfoWindow>
+					</Marker>
 
-			<div className="w-fit">
+					{
+						Object.keys(destinations)?.map((key) => {
+							if (destinations?.[key]?.lat === "" || destinations?.[key]?.lat === null || destinations?.[key]?.lat === undefined || destinations?.[key]?.long === "" || destinations?.[key]?.long === null || destinations?.[key]?.long === undefined)
+								return null;
 
-				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5">Planner</div>
-					{renderDepot()}
-					{renderDestinationInput("A", "Destination A")}
-					{renderDestinationInput("B", "Destination B")}
-					{renderDestinationInput("C", "Destination C")}
-					{renderDestinationInput("D", "Destination D")}
-					<div className="flex justify-end pt-2">
-						<button onClick={generateSampleData} className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
-							Generate Sample
-						</button>
-					</div>
-				</div>
-
-				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5">1: Manual Planning (Anticipated)</div>
-					{renderManualPlanningInput(0, "Trip 1")}
-					{renderManualPlanningInput(1, "Trip 2")}
-					{renderManualPlanningInput(2, "Trip 3")}
-					{renderManualPlanningInput(3, "Trip 4")}
-					<div className="flex pt-2">
-						{(manualPlanDistance && manualPlanTime) ? `Distance is (${manualPlanDistance} km) and Time is (${manualPlanTime} Minutes)` : ""}
-					</div>
-					<div className="flex justify-end pt-2">
-						<button onClick={planManually} className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
-							Plan Manually
-						</button>
-					</div>
-				</div>
-
-				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5">2: Optimized Planning</div>
-					<div className="pt-2">
-						{(!optimizedPlanPath) ? null : optimizedPlanPath?.map((destination, key) => {
 							return (
-								<div key={key} className="flex items-center gap-2 pb-2">
-									<div className="w-32 whitespace-nowrap">Trip {key + 1}:</div>
-									<input
-										type="text"
-										className="bg-gray-300 rounded p-2 border cursor-not-allowed grow"
-										value={destination?.label?.charAt(0).toUpperCase() + destination?.label?.slice(1)?.toLowerCase()}
-										disabled={true}
-									/>
-								</div>
-							)
-						})}
-					</div>
-					<div className="flex pt-2">
-						{(optimizedPlanDistance && optimizedPlanTime) ? `Distance is (${optimizedPlanDistance} km) and Time is (${optimizedPlanTime} Minutes)` : "Click on plan to design your route"}
-					</div>					
-					<div className="flex justify-end pt-2">
-						<button onClick={planWithOptimization} className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer">
-							Plan with Optimization
-						</button>
-					</div>
-				</div>
-
-				<div className="pb-20">
-					<div className="text-2xl font-bold pb-5"> 3:Simulate Heuristic Planning (In Progress)</div>
-					<div className="flex justify-end pt-2 gap-2">
-						<input
-							type="text"
-							placeholder="Speed"
-							className="bg-white rounded p-2 border w-20"
-							defaultValue={speedForTrip1}
-							onChange={e => handleSpeedChange(1, e.target.value)}
-						/>
-						<div className="p-3">km</div>
-						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(1)}>
-							Simulate Trip 1
-						</button>
-					</div>	
-					<div className="flex justify-end pt-2 gap-2">
-						<input
-							type="text"
-							placeholder="Speed"
-							className="bg-white rounded p-2 border w-20"
-							defaultValue={speedForTrip2}
-							onChange={e => handleSpeedChange(2, e.target.value)}
-						/>
-						<div className="p-3">km</div>
-						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(2)}>
-							Simulate Trip 2
-						</button>
-					</div>	
-					<div className="flex justify-end pt-2 gap-2">
-						<input
-							type="text"
-							placeholder="Speed"
-							className="bg-white rounded p-2 border w-20"
-							defaultValue={speedForTrip3}
-							onChange={e => handleSpeedChange(3, e.target.value)}
-						/>
-						<div className="p-3">km</div>
-						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(3)}>
-							Simulate Trip 3
-						</button>
-					</div>	
-					<div className="flex justify-end pt-2 gap-2">
-						<input
-							type="text"
-							placeholder="Speed"
-							className="bg-white rounded p-2 border w-20"
-							defaultValue={speedForTrip4}
-							onChange={e => handleSpeedChange(4, e.target.value)}
-						/>
-						<div className="p-3">km</div>
-						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(4)}>
-							Simulate Trip 4
-						</button>
-					</div>
-					<div className="flex justify-end pt-2 gap-2">
-						<input
-							type="text"
-							placeholder="Speed"
-							className="bg-white rounded p-2 border w-20"
-							defaultValue={speedForTrip5}
-							onChange={e => handleSpeedChange(5, e.target.value)}
-						/>
-						<div className="p-3">km</div>
-						<button className="bg-amber-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={() => simulateTrip(5)}>
-							Return to Depot
-						</button>
-					</div>		
-					<div className="flex justify-end pt-2 gap-2">
-						<button className="bg-indigo-600 text-white px-4 py-2 rounded cursor-pointer w-48" onClick={simulateEndTrip}>
-							Show Report
-						</button>
-					</div>																								
-				</div>				
+								<InfoWindow key={key} position={{ lat: parseFloat(destinations?.[key]?.lat), lng: parseFloat(destinations?.[key]?.long) }} options={infoOptions}>
+									<div className="px-3 py-2 text-white">{key}</div>
+								</InfoWindow>)
+						})
+					}
+				</GoogleMap>
 			</div>
+			<div>
+				<div className="flex flex-row gap-5">
 
-			<div className="grow" />
 
-			<div className="w-fit">
-				<div className="pb-20">
-					<div className="w-[900px] h-[700px]">
-						<GoogleMap
-							id={"google-map-view"}
-							zoom={11}
-							ref={mapRef}
-							options={mapOptions}
-							mapContainerStyle={{ width: '100%', height: '100%' }}
-							center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
-						>
-							<Marker key={"point_depot"}
-							>
-								<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions} >
-									<div className="px-[9px] py-2 text-white" style={{backgroundColor:"#0000ff"}}>⭐</div>
-								</InfoWindow>
-							</Marker>
 
-							{
-								Object.keys(destinations)?.map((key) => {
-									if (destinations?.[key]?.lat === "" || destinations?.[key]?.lat === null || destinations?.[key]?.lat === undefined || destinations?.[key]?.long === "" || destinations?.[key]?.long === null || destinations?.[key]?.long === undefined)
-										return null;
-
-									return (
-										<InfoWindow key={key} position={{ lat: parseFloat(destinations?.[key]?.lat), lng: parseFloat(destinations?.[key]?.long) }} options={infoOptions}>
-											<div className="px-3 py-2 text-white">{key}</div>
-										</InfoWindow>)
-								})
-							}
-
-						</GoogleMap>
+					<div className="grow">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 1: Destinations
+						</div>
+						<div className="bg-amber-100 p-4">
+							{renderDepotAndInitialSpeed()}
+							{renderDestinationInput("A", "Destination A")}
+							{renderDestinationInput("B", "Destination B")}
+							{renderDestinationInput("C", "Destination C")}
+							{renderDestinationInput("D", "Destination D")}
+							<div className="flex justify-end pt-2">
+								<button onClick={generateSampleLocations} className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
+									Generate Sample
+								</button>
+							</div>
+						</div>
 					</div>
+
+
+
+					<div className="grow">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 2: Manual Planning
+						</div>
+						<div className="bg-amber-100 p-4">
+							{renderPlanningInput(0, "Trip 1", false)}
+							{renderPlanningInput(1, "Trip 2", false)}
+							{renderPlanningInput(2, "Trip 3", false)}
+							{renderPlanningInput(3, "Trip 4", false)}							
+							<div className="flex justify-end pt-2">
+								<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
+									Plan
+								</button>
+							</div>										
+						</div>		
+					</div>	
+
+
+
+					<div className="grow">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 3: Optimized Planning
+						</div>
+						<div className="bg-amber-100 p-4">
+							{renderPlanningInput(0, "Trip 1", true)}
+							{renderPlanningInput(1, "Trip 2", true)}
+							{renderPlanningInput(2, "Trip 3", true)}
+							{renderPlanningInput(3, "Trip 4", true)}							
+							<div className="flex justify-end pt-2">
+								<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
+									Plan
+								</button>
+							</div>										
+						</div>						
+					</div>	
+
+
+
+					<div className="grow">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 4: Simulation
+						</div>
+						<div className="bg-amber-100 p-4">
+							CONTENT
+						</div>						
+					</div>
+
+
+
 				</div>
 			</div>
 		</div>
