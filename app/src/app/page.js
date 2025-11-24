@@ -435,15 +435,17 @@ export default function Home() {
 
 
 					<div className="flex flex-row gap-5">
-						<div className="grow">
+						<div className="grow flex flex-col">
 							<div className="font-bold bg-amber-200 p-4">
 								Step 2: Manual Planning
 							</div>
-							<div className="bg-amber-100 p-4">
+							<div className="bg-amber-100 p-4 grow">
 								{renderPlanningInput(0, "Trip 1", "manual", false)}
 								{renderPlanningInput(1, "Trip 2", "manual", false)}
 								{renderPlanningInput(2, "Trip 3", "manual", false)}
-								{renderPlanningInput(3, "Trip 4", "manual", false)}							
+								{renderPlanningInput(3, "Trip 4", "manual", false)}	
+							</div>
+							<div className="font-bold bg-amber-100 p-4">						
 								<div className="flex justify-end pt-2">
 									<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 										Plan
@@ -454,15 +456,17 @@ export default function Home() {
 
 
 
-						<div className="grow">
+						<div className="grow flex flex-col">
 							<div className="font-bold bg-amber-200 p-4">
 								Step 3: Optimized Planning
 							</div>
-							<div className="bg-amber-100 p-4">
+							<div className="bg-amber-100 p-4 grow">
 								{renderPlanningInput(0, "Trip 1", "optimized", true)}
 								{renderPlanningInput(1, "Trip 2", "optimized", true)}
 								{renderPlanningInput(2, "Trip 3", "optimized", true)}
-								{renderPlanningInput(3, "Trip 4", "optimized", true)}							
+								{renderPlanningInput(3, "Trip 4", "optimized", true)}	
+							</div>
+							<div className="font-bold bg-amber-100 p-4">												
 								<div className="flex justify-end pt-2">
 									<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 										Plan
@@ -473,11 +477,11 @@ export default function Home() {
 
 
 
-						<div className="grow">
+						<div className="grow flex flex-col">
 							<div className="font-bold bg-amber-200 p-4">
 								Step 4: Simulation
 							</div>
-							<div className="bg-amber-100 p-4">
+							<div className="bg-amber-100 p-4 grow">
 								{renderSimulationInput(1, "Trip 1")}
 								{renderSimulationInput(2, "Trip 2")}
 								{renderSimulationInput(3, "Trip 3")}
