@@ -11,6 +11,10 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 export default function Home() {
 
 
+	// Loading Spinner
+	const [isLoading, setIsLoading] = useState(false);
+
+
 
 	// Set PSU to be Depot :)
 	const mapLat = 24.737513266445525;
@@ -45,7 +49,12 @@ export default function Home() {
 
 	// Manual Plan
 	const [manualPlan, setManualPlan] = useState([]);
+	const [manualPlanData, setManualPlanData] = useState({});
+
+
+	// Optimized Plan
 	const [optimizedPlan, setOptimizedPlan] = useState([]);
+	const [OptimizedPlanData, setOptimizedPlanData] = useState({});
 
 
 
@@ -142,7 +151,7 @@ export default function Home() {
 	// Render Manual Planning Input
 	const renderPlanningInput = (id, label, groupName, isReadOnly) => (
 		<div className="flex items-center gap-2 pb-2">
-			<div className="pe-4 whitespace-nowrap">{label}:</div>
+			<div className="min-w-20 whitespace-nowrap">{label}:</div>
 			<select
 				className={`grow bg-white rounded p-2 border w-48 ${(isReadOnly) ? "opacity-50" : ""}`}
 				value={(groupName === "manual" && manualPlan?.[id]) ? manualPlan?.[id] : (groupName === "optimized" && optimizedPlan?.[id]) ? optimizedPlan?.[id] : ""}
@@ -169,7 +178,7 @@ export default function Home() {
 				type="text"
 				placeholder="Speed"
 				className="bg-white rounded p-2 border w-20"
-				defaultValue={(id===1) ? speedForTrip1 : (id===2) ? speedForTrip2 : (id===3) ? speedForTrip3 : (id===4) ? speedForTrip4 : ""}
+				defaultValue={(id===1) ? speedForTrip1 : (id===2) ? speedForTrip2 : (id===3) ? speedForTrip3 : (id===4) ? speedForTrip4 : (id===5) ? speedForTrip5 : ""}
 				onChange={e => handleSpeedChange(id, e.target.value)}
 			/>	
 			<div className="p-3">km</div>
@@ -297,6 +306,7 @@ export default function Home() {
 
 			let distance = 0;
 			let time	 = 0;
+			let polyline = "";
 
 			distance = calculateDistanceBetweenMultiPoints({ lat: depot?.lat, long: depot?.long }, points);
 			
@@ -306,6 +316,8 @@ export default function Home() {
 				{
 					time = calculateTravelTimeInMinutes(distance, startingSpeed);
 				}
+
+				setManualPlanData({distance:distance, duration:time, polyline:polyline})
 
 				alert(`✅ Planning Completed\n\n📍 Route: Depot -> ${points?.[0]?.label} -> ${points?.[1]?.label} -> ${points?.[2]?.label} -> ${points?.[3]?.label} -> Depot\n🚚 Distance: ${Math.round(distance*100)/100} km\n🕒 Time: ${Math.round(time*100)/100} min\n🛞 Avg. Speed: ${startingSpeed} kph`);
 			}
@@ -339,28 +351,11 @@ export default function Home() {
 
 
 
-	// Simulate
-	const simulate = (trip) =>
-	{
-		if (!isValideManualPlanning()) {
-			alert("❌ You should plan manually first");
-		}
-		else if (!isValideOptimizedPlanning()) {
-			alert("❌ You should plan with optimization first");
-		}		
-		else {
-
-			// To Do
-
-			alert("✅ Simulation Completed");
-		}
-	};
-
-
-
 	// Get optimized rout using HTTPs
 	async function getOptimizedRouteUsingHTTPs()
 	{
+		setIsLoading(true);
+
 		const toWaypoint = ([lat, lng]) => ({
 			location: { latLng: { latitude: lat, longitude: lng } }
 		});
@@ -397,6 +392,8 @@ export default function Home() {
 
   		const data = await res.json();
 
+		setIsLoading(false);
+
 		if(data?.routes[0])
 		{
 			const route = data.routes[0];
@@ -406,10 +403,8 @@ export default function Home() {
 			let polyline = route.polyline.encodedPolyline;
 			let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => unorderedDestinations?.[i]);
 
-			console.log(manualPlan)
-			console.log(newOrder)
-
 			setOptimizedPlan(newOrder);
+			setOptimizedPlanData({distance:distance, duration:duration, polyline:polyline})
 			
 			alert("✅ Planning Completed");
 		}
@@ -418,6 +413,27 @@ export default function Home() {
 			alert("❌ Failed to reach Google Server");
 		}
 	};
+
+
+
+	// Simulate
+	const simulate = (trip) =>
+	{
+		if (!isValideManualPlanning()) {
+			alert("❌ You should plan manually first");
+		}
+		else if (!isValideOptimizedPlanning()) {
+			alert("❌ You should plan with optimization first");
+		}		
+		else {
+
+			// To Do
+
+			alert("✅ Simulation Completed");
+		}
+	};
+
+
 
 	// Helper: Validate Coordinates of any given destination (point)
 	const isValideSetOfCoordinates = (points) =>
@@ -518,6 +534,16 @@ export default function Home() {
 	// Render FULL HTML
 	return isLoaded ? (
 		<div className="flex flex-col gap-5 p-5">
+			
+			{(isLoading) ?
+				<div className="fixed flex justify-center items-center bg-white opacity-90 w-full h-full z-50 top-0 left-0">
+					<img src="/loading.gif" width="40" height="40" alt="dynamic image"/>
+				</div>
+			:
+				<></>
+			}
+			
+			
 			<div className="w-full h-[450px]">
 				<GoogleMap
 					id={"google-map-view"}
@@ -547,25 +573,31 @@ export default function Home() {
 					}
 				</GoogleMap>
 			</div>
+
+
 			<div>
 				<div className="flex flex-row gap-5">
 
 
 
 					<div className="grow">
-						<div className="font-bold bg-amber-200 p-4">
-							Step 1: Destinations
-						</div>
-						<div className="bg-amber-100 p-4">
-							{renderDepotAndInitialSpeed()}
-							{renderDestinationInput("A", "Destination A")}
-							{renderDestinationInput("B", "Destination B")}
-							{renderDestinationInput("C", "Destination C")}
-							{renderDestinationInput("D", "Destination D")}
-							<div className="flex justify-end pt-2">
-								<button onClick={generateSampleLocations} className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
-									Generate Sample
-								</button>
+						<div className="flex flex-col h-full">							
+							<div className="font-bold bg-amber-200 p-4">
+								Step 1: Destinations
+							</div>
+							<div className="bg-amber-100 p-4">
+								{renderDepotAndInitialSpeed()}
+								{renderDestinationInput("A", "Destination A")}
+								{renderDestinationInput("B", "Destination B")}
+								{renderDestinationInput("C", "Destination C")}
+								{renderDestinationInput("D", "Destination D")}
+							</div>
+							<div className="grow bg-amber-100 px-4 pb-4">
+								<div className="flex justify-end pt-2">
+									<button onClick={generateSampleLocations} className="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
+										Generate Sample
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -581,8 +613,38 @@ export default function Home() {
 								{renderPlanningInput(1, "Trip 2", "manual", false)}
 								{renderPlanningInput(2, "Trip 3", "manual", false)}
 								{renderPlanningInput(3, "Trip 4", "manual", false)}	
+								
+								{(manualPlanData?.distance) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap min-w-20">Distance:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50"
+											value={Math.round(manualPlanData?.distance*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">km</div>
+									</div>
+								:
+									<></>
+								}
+
+								{(manualPlanData?.duration) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap min-w-20">Duration:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50"
+											value={Math.round(manualPlanData?.duration*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">min</div>
+									</div>									
+								:
+									<></>
+								}								
 							</div>
-							<div className="bg-amber-100 p-4">												
+							<div className="bg-amber-100 px-4 pb-4">												
 								<div className="flex justify-end pt-2">
 									<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 										Plan
@@ -602,8 +664,38 @@ export default function Home() {
 								{renderPlanningInput(1, "Trip 2", "optimized", true)}
 								{renderPlanningInput(2, "Trip 3", "optimized", true)}
 								{renderPlanningInput(3, "Trip 4", "optimized", true)}	
+
+								{(OptimizedPlanData?.distance) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap min-w-20">Distance:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50"
+											value={Math.round(OptimizedPlanData?.distance*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">km</div>
+									</div>
+								:
+									<></>
+								}
+
+								{(OptimizedPlanData?.duration) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap min-w-20">Duration:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50"
+											value={Math.round(OptimizedPlanData?.duration*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">min</div>
+									</div>									
+								:
+									<></>
+								}								
 							</div>
-							<div className="bg-amber-100 p-4">												
+							<div className="bg-amber-100 px-4 pb-4">												
 								<div className="flex justify-end pt-2">
 									<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 										Plan
