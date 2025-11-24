@@ -140,12 +140,12 @@ export default function Home() {
 
 
 	// Render Manual Planning Input
-	const renderPlanningInput = (id, label, isReadOnly) => (
+	const renderPlanningInput = (id, label, groupName, isReadOnly) => (
 		<div className="flex items-center gap-2 pb-2">
 			<div className="w-32 whitespace-nowrap">{label}:</div>
 			<select
 				className={`grow bg-white rounded p-2 border ${(isReadOnly) ? "opacity-50" : ""}`}
-				value={manualPlan?.[id] ?? ""}
+				value={(groupName === "manual" && manualPlan?.[id]) ? manualPlan?.[id] : (groupName === "optimized" && optimizedPlan?.[id]) ? optimizedPlan?.[id] : ""}
 				onChange={e => handlePlanningInputChange(id, e.target.value)}
 				disabled={isReadOnly}
 			>
@@ -303,7 +303,7 @@ export default function Home() {
 		else {
 
 			// To Do
-			
+
 			alert("✅ Planning Completed");
 		}
 	}	
@@ -410,10 +410,10 @@ export default function Home() {
 							Step 2: Manual Planning
 						</div>
 						<div className="bg-amber-100 p-4">
-							{renderPlanningInput(0, "Trip 1", false)}
-							{renderPlanningInput(1, "Trip 2", false)}
-							{renderPlanningInput(2, "Trip 3", false)}
-							{renderPlanningInput(3, "Trip 4", false)}							
+							{renderPlanningInput(0, "Trip 1", "manual", false)}
+							{renderPlanningInput(1, "Trip 2", "manual", false)}
+							{renderPlanningInput(2, "Trip 3", "manual", false)}
+							{renderPlanningInput(3, "Trip 4", "manual", false)}							
 							<div className="flex justify-end pt-2">
 								<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 									Plan
@@ -429,10 +429,10 @@ export default function Home() {
 							Step 3: Optimized Planning
 						</div>
 						<div className="bg-amber-100 p-4">
-							{renderPlanningInput(0, "Trip 1", true)}
-							{renderPlanningInput(1, "Trip 2", true)}
-							{renderPlanningInput(2, "Trip 3", true)}
-							{renderPlanningInput(3, "Trip 4", true)}							
+							{renderPlanningInput(0, "Trip 1", "optimized", true)}
+							{renderPlanningInput(1, "Trip 2", "optimized", true)}
+							{renderPlanningInput(2, "Trip 3", "optimized", true)}
+							{renderPlanningInput(3, "Trip 4", "optimized", true)}							
 							<div className="flex justify-end pt-2">
 								<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
 									Plan
