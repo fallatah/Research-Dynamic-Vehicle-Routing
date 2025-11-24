@@ -6,7 +6,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
+
+import decodePolyline from "decode-google-map-polyline";
 
 export default function Home() {
 
@@ -67,6 +69,21 @@ export default function Home() {
 		googleMapsApiKey: `${process.env.NEXT_PUBLIC_MAP_API_KEY}`
 	});
 
+
+    const fenceOptions =
+    {
+        fillColor: "#000000",
+        strokeColor: "#000000",
+        fillOpacity: 0,
+        strokeOpacity: 1,
+        strokeWeight: 3,
+        clickable: false,
+        draggable: false,
+        editable: false,
+        geodesic: false,
+        zIndex: 1,
+    };
+
 	const mapOptions = {
 		zoomControl: false,
 		mapTypeControl: false,
@@ -87,7 +104,6 @@ export default function Home() {
 		},
 		closeBoxURL: ""
 	};	
-
 
 	
 	// Render Depot & Initial Speed
@@ -400,7 +416,7 @@ export default function Home() {
 	
 			let distance = route.distanceMeters * 0.001;
 			let duration = Math.floor(parseInt(route?.duration?.replace("s", ""), 10)/60);
-			let polyline = route.polyline.encodedPolyline;
+			let polyline = decodePolyline(route.polyline.encodedPolyline);
 			let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => unorderedDestinations?.[i]);
 
 			setOptimizedPlan(newOrder);
@@ -553,6 +569,13 @@ export default function Home() {
 					mapContainerStyle={{ width: '100%', height: '100%' }}
 					center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 				>
+					{(OptimizedPlanData?.polyline)
+					?
+						<Polyline path={OptimizedPlanData?.polyline} options={fenceOptions}/>
+					:
+						null
+					}
+
 					<Marker key={"point_depot"}
 					>
 						<InfoWindow position={{ lat: parseFloat(depot?.lat), lng: parseFloat(depot?.long) }} options={infoOptions} >
