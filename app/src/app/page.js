@@ -160,7 +160,6 @@ export default function Home() {
 
 
 
-
 	// Render Simulation Input
 	const renderSimulationInput = (id, label) =>
 	( 
@@ -334,10 +333,7 @@ export default function Home() {
 			alert("❌ Invalid Latitude/Longitude Values");
 		}
 		else {
-
-			// To Do
-
-			alert("✅ Planning Completed");
+			getOptimizedRouteUsingHTTPs();
 		}
 	}	
 
@@ -361,6 +357,58 @@ export default function Home() {
 	};
 
 
+
+	// Get optimized rout using HTTPs
+	async function getOptimizedRouteUsingHTTPs()
+	{
+		const toWaypoint = ([lat, lng]) => ({
+			location: { latLng: { latitude: lat, longitude: lng } }
+		});
+
+		let temp = [];
+
+		Object.keys(destinations)?.forEach(key => {
+			temp.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+		});
+
+		const body = {
+			origin: toWaypoint([depot?.lat, depot?.long]),
+			destination: toWaypoint([depot?.lat, depot?.long]),
+			intermediates: temp,
+			travelMode: "DRIVE",
+			routingPreference: "TRAFFIC_AWARE",
+			languageCode: "en-US",
+			units: "METRIC"
+		};
+
+		const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",
+		{
+			method: "POST",
+			headers: {
+			"Content-Type": "application/json",
+			"X-Goog-Api-Key": process.env.NEXT_PUBLIC_MAP_API_KEY,
+			"X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline"
+			},
+			body: JSON.stringify(body)
+		});
+
+  		const data = await res.json();
+		const route = data.routes[0];
+
+		const navigation = {
+			distanceMeters: route.distanceMeters,
+			duration: route.duration,
+			polyline: {
+			encodedPolyline: route.polyline.encodedPolyline
+			}
+		};
+
+		console.log(navigation)
+
+		alert("✅ Planning Completed");
+
+		return navigation;
+	};
 
 	// Helper: Validate Coordinates of any given destination (point)
 	const isValideSetOfCoordinates = (points) =>
