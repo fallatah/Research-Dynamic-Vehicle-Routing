@@ -142,9 +142,9 @@ export default function Home() {
 	// Render Manual Planning Input
 	const renderPlanningInput = (id, label, groupName, isReadOnly) => (
 		<div className="flex items-center gap-2 pb-2">
-			<div className="w-32 whitespace-nowrap">{label}:</div>
+			<div className="pe-4 whitespace-nowrap">{label}:</div>
 			<select
-				className={`grow bg-white rounded p-2 border ${(isReadOnly) ? "opacity-50" : ""}`}
+				className={`grow bg-white rounded p-2 border w-48 ${(isReadOnly) ? "opacity-50" : ""}`}
 				value={(groupName === "manual" && manualPlan?.[id]) ? manualPlan?.[id] : (groupName === "optimized" && optimizedPlan?.[id]) ? optimizedPlan?.[id] : ""}
 				onChange={e => handlePlanningInputChange(id, e.target.value)}
 				disabled={isReadOnly}
@@ -155,6 +155,28 @@ export default function Home() {
 				<option value="C">C</option>
 				<option value="D">D</option>
 			</select>
+		</div>
+	);
+
+
+
+
+	// Render Simulation Input
+	const renderSimulationInput = (id, label) =>
+	( 
+		<div className="flex items-center gap-2 pb-2">
+			<div className="pe-4 whitespace-nowrap">{label}:</div>
+			<input
+				type="text"
+				placeholder="Speed"
+				className="bg-white rounded p-2 border w-20"
+				defaultValue={(id===1) ? speedForTrip1 : (id===2) ? speedForTrip2 : (id===3) ? speedForTrip3 : (id===4) ? speedForTrip4 : ""}
+				onChange={e => handleSpeedChange(id, e.target.value)}
+			/>	
+			<div className="p-3">km</div>
+			<button className="bg-amber-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id)}>
+				Simulate
+			</button>
 		</div>
 	);
 
@@ -310,6 +332,14 @@ export default function Home() {
 
 
 
+	// Simulate
+	const simulate = (trip) =>
+	{
+
+	};
+
+
+
 	// Helper: Validate Coordinates of any given destination (point)
 	const isValideSetOfCoordinates = (points) =>
 	{
@@ -404,54 +434,58 @@ export default function Home() {
 					</div>
 
 
+					<div className="flex flex-row gap-5">
+						<div className="grow">
+							<div className="font-bold bg-amber-200 p-4">
+								Step 2: Manual Planning
+							</div>
+							<div className="bg-amber-100 p-4">
+								{renderPlanningInput(0, "Trip 1", "manual", false)}
+								{renderPlanningInput(1, "Trip 2", "manual", false)}
+								{renderPlanningInput(2, "Trip 3", "manual", false)}
+								{renderPlanningInput(3, "Trip 4", "manual", false)}							
+								<div className="flex justify-end pt-2">
+									<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
+										Plan
+									</button>
+								</div>										
+							</div>		
+						</div>	
 
-					<div className="grow">
-						<div className="font-bold bg-amber-200 p-4">
-							Step 2: Manual Planning
+
+
+						<div className="grow">
+							<div className="font-bold bg-amber-200 p-4">
+								Step 3: Optimized Planning
+							</div>
+							<div className="bg-amber-100 p-4">
+								{renderPlanningInput(0, "Trip 1", "optimized", true)}
+								{renderPlanningInput(1, "Trip 2", "optimized", true)}
+								{renderPlanningInput(2, "Trip 3", "optimized", true)}
+								{renderPlanningInput(3, "Trip 4", "optimized", true)}							
+								<div className="flex justify-end pt-2">
+									<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
+										Plan
+									</button>
+								</div>										
+							</div>						
+						</div>	
+
+
+
+						<div className="grow">
+							<div className="font-bold bg-amber-200 p-4">
+								Step 4: Simulation
+							</div>
+							<div className="bg-amber-100 p-4">
+								{renderSimulationInput(1, "Trip 1")}
+								{renderSimulationInput(2, "Trip 2")}
+								{renderSimulationInput(3, "Trip 3")}
+								{renderSimulationInput(4, "Trip 4")}	
+								{renderSimulationInput(4, "Trip 5")}																					
+							</div>						
 						</div>
-						<div className="bg-amber-100 p-4">
-							{renderPlanningInput(0, "Trip 1", "manual", false)}
-							{renderPlanningInput(1, "Trip 2", "manual", false)}
-							{renderPlanningInput(2, "Trip 3", "manual", false)}
-							{renderPlanningInput(3, "Trip 4", "manual", false)}							
-							<div className="flex justify-end pt-2">
-								<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
-									Plan
-								</button>
-							</div>										
-						</div>		
-					</div>	
-
-
-
-					<div className="grow">
-						<div className="font-bold bg-amber-200 p-4">
-							Step 3: Optimized Planning
-						</div>
-						<div className="bg-amber-100 p-4">
-							{renderPlanningInput(0, "Trip 1", "optimized", true)}
-							{renderPlanningInput(1, "Trip 2", "optimized", true)}
-							{renderPlanningInput(2, "Trip 3", "optimized", true)}
-							{renderPlanningInput(3, "Trip 4", "optimized", true)}							
-							<div className="flex justify-end pt-2">
-								<button onClick={planOptimized} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
-									Plan
-								</button>
-							</div>										
-						</div>						
-					</div>	
-
-
-
-					<div className="grow">
-						<div className="font-bold bg-amber-200 p-4">
-							Step 4: Simulation
-						</div>
-						<div className="bg-amber-100 p-4">
-							CONTENT
-						</div>						
 					</div>
-
 
 
 				</div>
