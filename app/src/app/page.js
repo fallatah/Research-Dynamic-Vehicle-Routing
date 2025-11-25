@@ -1,8 +1,3 @@
-// find references that this approcah is not usable
-// generate sample data 
-// write the senario with high-quality screenshots and show the actual alghorithim
-// look at the IEEE template
-
 "use client";
 
 import { useState, useRef } from "react";
@@ -12,6 +7,8 @@ import decodePolyline from "decode-google-map-polyline";
 
 export default function Home()
 {
+	let MapKey = Math.random();
+
 	// Loading Spinner
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSimulating, setIsSimulating] = useState(false);
@@ -163,6 +160,8 @@ export default function Home()
 		temp[key] = !polylineVisibility[key];
 		
 		setPolylineVisibility(temp);
+
+		console.log(polylineVisibility?.manualPlan)
 	}
 
 
@@ -860,12 +859,9 @@ export default function Home()
 					mapContainerStyle={{ width: '100%', height: '100%' }}
 					center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 				>
-					{(polylineVisibility?.manualPlan && !isSimulating && manualPlanData?.polyline)
-					?
+					{polylineVisibility?.manualPlan && !isSimulating && manualPlanData?.polyline && (
 						<Polyline path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
-					:
-						null
-					}
+					)}
 
 					{(polylineVisibility?.optimizedPlan && !isSimulating && OptimizedPlanData?.polyline)
 					?
