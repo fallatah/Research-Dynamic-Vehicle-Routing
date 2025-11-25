@@ -66,6 +66,7 @@ export default function Home()
 	const [heuristicPlanData, setHeuristicPlanData] = useState({});
 
 
+
 	// simulation
 	const [simulation, setSimulation] = useState(
 	{
@@ -121,10 +122,8 @@ export default function Home()
 	});
 
 
-    const manualPolylineOptions =
+    const polylineOptions =
     {
-        fillColor: "#53A000",
-        strokeColor: "#53A000",
         fillOpacity: 1,
         strokeOpacity: 1,
         strokeWeight: 5,
@@ -134,20 +133,6 @@ export default function Home()
         geodesic: false,
         zIndex: 1,
     };
-
-    const optimizedPolylineOptions =
-    {
-        fillColor: "#0000ff",
-        strokeColor: "#0000ff",
-        fillOpacity: 1,
-        strokeOpacity: 1,
-        strokeWeight: 5,
-        clickable: false,
-        draggable: false,
-        editable: false,
-        geodesic: false,
-        zIndex: 1,
-    };	
 
 	const mapOptions = {
 		zoomControl: false,
@@ -848,19 +833,41 @@ export default function Home()
 					mapContainerStyle={{ width: '100%', height: '100%' }}
 					center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 				>
-					{(manualPlanData?.polyline)
+					{(!isSimulating && manualPlanData?.polyline)
 					?
-						<Polyline path={manualPlanData?.polyline} options={manualPolylineOptions}/>
+						<Polyline path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
 					:
 						null
 					}
 
-					{(OptimizedPlanData?.polyline)
+					{(!isSimulating && OptimizedPlanData?.polyline)
 					?
-						<Polyline path={OptimizedPlanData?.polyline} options={optimizedPolylineOptions}/>
+						<Polyline path={OptimizedPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
 					:
 						null
-					}					
+					}	
+
+					
+					{(isSimulating && simulation?.polyline?.manual)
+					?
+						<Polyline path={simulation?.polyline?.manual} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
+					:
+						null
+					}
+
+					{(isSimulating && simulation?.polyline?.optimized)
+					?
+						<Polyline path={simulation?.polyline?.optimized} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
+					:
+						null
+					}								
+
+					{(isSimulating && simulation?.polyline?.heuristic)
+					?
+						<Polyline path={simulation?.polyline?.heuristic} options={{...polylineOptions, ...{fillColor: "#ff0000",strokeColor: "#ff0000"}}}/>
+					:
+						null
+					}	
 
 					<Marker key={"point_depot"}
 					>
