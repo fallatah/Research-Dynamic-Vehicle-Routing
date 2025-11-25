@@ -522,7 +522,7 @@ export default function Home()
 
 			setIsSimulating(true);
 
-			//setSimulation(prev => ({...prev, step: prev.step+1})); // for testing
+			setSimulation(prev => ({...prev, step: prev.step+1})); // for testing
 
 			
 			
@@ -554,6 +554,9 @@ export default function Home()
 				});
 
 
+
+
+				// Find next destination
 				let nextDestination = undefined;
 
 				if(intermediates.length > 2)
@@ -577,27 +580,34 @@ export default function Home()
 					nextDestination = remainingDistinations[0];
 				}				
 
+
+
 				newPath.heuristic.push(nextDestination);
 
 				remainingDistinations = heuristicPlan.filter(item => !newPath.heuristic.includes(item));
 
-				console.log("new order", [...newPath.heuristic, ...remainingDistinations]);
+				if(remainingDistinations?.length > 1)
+				{				
+					// Reorganize the remaining destinations based on the newly selected destination
+					start = toWaypoint([destinations?.[nextDestination]?.lat, destinations?.[nextDestination]?.long]);
+					end = toWaypoint([depot.lat, depot.long]);
+					intermediates = [];
 
+					remainingDistinations.forEach(key =>
+					{
+						intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+					});
 
-				
+					let newRoute = await getPathFromGoogleAPI(start, intermediates, end);
+					
+					let newOrder = newRoute.optimizedIntermediateWaypointIndex?.map(i => remainingDistinations?.[i]);
 
-				// // find next nearest location using google
-				// let xxx = 0;
-				// for(var i=xxx+1; i<optimizedPlan?.length; i++)
-				// {
-				// 	console.log(optimizedPlan[i])
-				// }
-
-				// if(remainingDistinations.length > 0)
-				// {
-				// 	console.log("talk to google")
-				// }
-
+					setHeuristicPlan([...newPath.heuristic, ...newOrder]);
+				}
+				else
+				{
+					setHeuristicPlan([...newPath.heuristic, ...remainingDistinations]);
+				}
 			}
 			else
 			{
@@ -619,7 +629,7 @@ export default function Home()
 
 
 			// Update Values 
-			//setSimulation(prev => ({ ...prev, path: newPath })); // for testing
+			setSimulation(prev => ({ ...prev, path: newPath })); // for testing
 			//setSimulation(prev => ({ ...prev, distance: newDistance }));
 			//setSimulation(prev => ({ ...prev, duration: newDuration }));
 			//setSimulation(prev => ({ ...prev, polyline: newPolyline }));
