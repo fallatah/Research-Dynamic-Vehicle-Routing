@@ -17,6 +17,7 @@ export default function Home()
 
 	// Loading Spinner
 	const [isLoading, setIsLoading] = useState(false);
+	const [isSimulating, setIsSimulating] = useState(false);
 
 
 
@@ -27,7 +28,7 @@ export default function Home()
 
 
 	// Road speed in KPH
-	const [startingSpeed, setStartingSpeed] = useState(20.0);
+	const [startingSpeed, setStartingSpeed] = useState(70.0);
 
 	
 	
@@ -56,6 +57,31 @@ export default function Home()
 	// Optimized Plan
 	const [optimizedPlan, setOptimizedPlan] = useState([]);
 	const [OptimizedPlanData, setOptimizedPlanData] = useState({});
+
+
+	// simulation
+	const [simulation, setSimulation] = useState(
+	{
+		step:0,
+		path:
+		{
+			manual:[],
+			optimized:[],
+			heuristic:[]
+		},
+		distance:
+		{
+			manual:0.0,
+			optimized:0.0,
+			heuristic:0.0
+		},
+		duration:
+		{
+			manual:0.0,
+			optimized:0.0,
+			heuristic:0.0
+		}
+	});
 
 
 
@@ -119,6 +145,7 @@ export default function Home()
 	};	
 
 	
+
 	// Render Depot & Initial Speed
 	const renderDepotAndInitialSpeed = () => (
 		<>
@@ -203,13 +230,13 @@ export default function Home()
 	( 
 		<div className="flex items-center gap-2 pb-2">
 			<div className="pe-4 whitespace-nowrap">{label}:</div>
-			<button className="bg-violet-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id, true)}>
+			<button className={`${(simulation.step > id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-violet-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, true)}>
 				Proceed
 			</button>
 
 			{(id <= 3)
 			?
-				<button className="bg-rose-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id, false)}>
+				<button className={`${(simulation.step > id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-rose-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, false)}>
 					Traffic
 				</button>
 			:
@@ -263,12 +290,6 @@ export default function Home()
 	};
 	
 
-	
-	// Handle Destination Cahnge
-	const handlePlanningDataChange = () => {
-		// to do
-	};
-
 
 
 	// Generate Sample Locations
@@ -277,33 +298,38 @@ export default function Home()
 		// Scroll to top of page to view the map
 		window.scrollTo({ top: 0, behavior: "smooth" });
 
+		if(isSimulating)
+		{
+			alert("❌ Simulation started. Changes are not allowed");
+		}
+		else
+		{
+			// Set depot location to PSU :)
+			handleDepotChange("lat", mapLat);
+			handleDepotChange("long", mapLong);
+	
+	
+			// Pick points near the depot for a realistic cluster
+			const baseLat = parseFloat(mapLat);
+			const baseLong = parseFloat(mapLong);
+			const jitter = () => (Math.random() - 0.5) * 0.2; // about ±0.1 deg
+	
+	
+			handleDestinationChange("A", "lat", (baseLat + jitter()).toFixed(6));
+			handleDestinationChange("A", "long", (baseLong + jitter()).toFixed(6));
+			handleDestinationChange("B", "lat", (baseLat + jitter()).toFixed(6));
+			handleDestinationChange("B", "long", (baseLong + jitter()).toFixed(6));
+			handleDestinationChange("C", "lat", (baseLat + jitter()).toFixed(6));
+			handleDestinationChange("C", "long", (baseLong + jitter()).toFixed(6));
+			handleDestinationChange("D", "lat", (baseLat + jitter()).toFixed(6));
+			handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
+	
+			setManualPlanData({});
+			setOptimizedPlanData({});
+			setManualPlan([]);
+			setOptimizedPlan([]);
+		}
 		
-		// Set depot location to PSU :)
-		handleDepotChange("lat", mapLat);
-		handleDepotChange("long", mapLong);
-
-
-		// Pick points near the depot for a realistic cluster
-		const baseLat = parseFloat(mapLat);
-		const baseLong = parseFloat(mapLong);
-		const jitter = () => (Math.random() - 0.5) * 0.2; // about ±0.1 deg
-
-
-		handleDestinationChange("A", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("A", "long", (baseLong + jitter()).toFixed(6));
-		handleDestinationChange("B", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("B", "long", (baseLong + jitter()).toFixed(6));
-		handleDestinationChange("C", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("C", "long", (baseLong + jitter()).toFixed(6));
-		handleDestinationChange("D", "lat", (baseLat + jitter()).toFixed(6));
-		handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
-
-		handlePlanningDataChange();
-
-		setManualPlanData({})
-		setOptimizedPlanData({})
-		setManualPlan([]);
-		setOptimizedPlan([]);
 	};
 
 
@@ -326,14 +352,18 @@ export default function Home()
 
 		polyline.push({ lat: parseFloat(depot.lat), lng: parseFloat(depot.long) });
 
-		if (!isValideSetOfCoordinates([...[{ label:"Depot", lat: depot?.lat, long: depot?.long }], ...points])) {
+		if(isSimulating)
+		{
+			alert("❌ Simulation started. Changes are not allowed");
+		}
+		else if(!isValideSetOfCoordinates([...[{ label:"Depot", lat: depot?.lat, long: depot?.long }], ...points])) {
 			alert("❌ Invalid Latitude/Longitude Values");
 		}
 		else if (!isValideManualPlanning()) {
 			alert("❌ You have to select 4 different destinations");
 		}
-		else {
-
+		else
+		{
 			distance = calculateDistanceBetweenMultiPoints({ lat: depot?.lat, long: depot?.long }, points);
 			
 			if(typeof startingSpeed === 'number' && startingSpeed > 0)
@@ -343,7 +373,7 @@ export default function Home()
 					time = calculateTravelTimeInMinutes(distance, startingSpeed);
 				}
 
-				setManualPlanData({distance:distance, duration:time, polyline:polyline})
+				setManualPlanData({distance:distance, duration:time, polyline:polyline});
 
 				alert(`✅ Planning Completed`);
 			}
@@ -367,7 +397,11 @@ export default function Home()
 			points.push({ label: key, lat: destinations?.[key]?.lat, long: destinations?.[key]?.long })
 		});
 
-		if (!isValideSetOfCoordinates(points)) {
+		if(isSimulating)
+		{
+			alert("❌ Simulation started. Changes are not allowed");
+		}
+		else if (!isValideSetOfCoordinates(points)) {
 			alert("❌ Invalid Latitude/Longitude Values");
 		}
 		else {
@@ -451,11 +485,11 @@ export default function Home()
 		else if (!isValideOptimizedPlanning()) {
 			alert("❌ You should plan with optimization first");
 		}		
-		else {
+		else
+		{
+			setSimulation(prev => ({...prev, step: prev.step+1}));
 
-			// To Do
-
-			alert("✅ Simulation Completed");
+			setIsSimulating(true);
 		}
 	};
 
@@ -570,8 +604,13 @@ export default function Home()
 				<></>
 			}
 			
-			
-			<div className="w-full h-[450px]">
+			<div className="text-right">
+				<button onClick={() => { window.location.reload()}} className="bg-amber-500 text-white px-4 py-2 rounded cursor-pointer">
+					Reset
+				</button>
+			</div>
+
+			<div className="w-full h-[390px]">
 				<GoogleMap
 					id={"google-map-view"}
 					zoom={11}
@@ -616,153 +655,152 @@ export default function Home()
 			</div>
 
 
-			<div>
-				<div className="flex flex-row gap-5">
+			<div className="flex flex-row gap-5">
 
 
 
-					<div className="grow">
-						<div className="flex flex-col h-full">							
-							<div className="font-bold bg-amber-200 p-4">
-								Step 1: Destinations
-							</div>
-							<div className="bg-amber-100 p-4">
-								{renderDepotAndInitialSpeed()}
-								{renderDestinationInput("A", "Destination A")}
-								{renderDestinationInput("B", "Destination B")}
-								{renderDestinationInput("C", "Destination C")}
-								{renderDestinationInput("D", "Destination D")}
-							</div>
-							<div className="grow bg-amber-100 px-4 pb-4">
-								<div className="flex justify-end pt-2">
-									<button onClick={generateSampleLocations} className="bg-black text-white px-4 py-2 rounded cursor-pointer">
-										Generate Sample
-									</button>
-								</div>
+				<div className="grow">
+					<div className="flex flex-col h-full">							
+						<div className="font-bold bg-amber-200 p-4">
+							Step 1: Destinations
+						</div>
+						<div className="bg-amber-100 p-4">
+							{renderDepotAndInitialSpeed()}
+							{renderDestinationInput("A", "Destination A")}
+							{renderDestinationInput("B", "Destination B")}
+							{renderDestinationInput("C", "Destination C")}
+							{renderDestinationInput("D", "Destination D")}
+						</div>
+						<div className="grow bg-amber-100 px-4 pb-4">
+							<div className="flex justify-end pt-2">
+								<button onClick={generateSampleLocations} className={`${(isSimulating) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-black text-white px-4 py-2 rounded`} disabled={(isSimulating)}>
+									Generate Sample
+								</button>
 							</div>
 						</div>
 					</div>
-
-
-					<div className="flex flex-row gap-5">
-						<div className="grow flex flex-col">
-							<div className="font-bold bg-amber-200 p-4">
-								Step 2: Manual Planning
-							</div>
-							<div className="bg-amber-100 p-4 grow">
-								{renderPlanningInput(0, "Trip 1", "manual", false)}
-								{renderPlanningInput(1, "Trip 2", "manual", false)}
-								{renderPlanningInput(2, "Trip 3", "manual", false)}
-								{renderPlanningInput(3, "Trip 4", "manual", false)}	
-								
-								{(manualPlanData?.distance) ? 
-									<div className="flex items-center gap-2 pb-2">
-										<div className="whitespace-nowrap min-w-20">Distance:</div>
-										<input
-											type="text"
-											className="bg-white rounded p-2 border grow opacity-50"
-											value={Math.round(manualPlanData?.distance*100)/100}
-											disabled={true}
-										/>	
-										<div className="w-8">km</div>
-									</div>
-								:
-									<></>
-								}
-
-								{(manualPlanData?.duration) ? 
-									<div className="flex items-center gap-2 pb-2">
-										<div className="whitespace-nowrap min-w-20">Duration:</div>
-										<input
-											type="text"
-											className="bg-white rounded p-2 border grow opacity-50"
-											value={Math.round(manualPlanData?.duration*100)/100}
-											disabled={true}
-										/>	
-										<div className="w-8">min</div>
-									</div>									
-								:
-									<></>
-								}								
-							</div>
-							<div className="bg-amber-100 px-4 pb-4">												
-								<div className="flex justify-end pt-2">
-									<button onClick={planManually} className="bg-green-600 text-white px-8 py-2 rounded cursor-pointer">
-										Plan
-									</button>
-								</div>										
-							</div>		
-						</div>	
-
-
-
-						<div className="grow flex flex-col">
-							<div className="font-bold bg-amber-200 p-4">
-								Step 3: Optimized Planning
-							</div>
-							<div className="bg-amber-100 p-4 grow">
-								{renderPlanningInput(0, "Trip 1", "optimized", true)}
-								{renderPlanningInput(1, "Trip 2", "optimized", true)}
-								{renderPlanningInput(2, "Trip 3", "optimized", true)}
-								{renderPlanningInput(3, "Trip 4", "optimized", true)}	
-
-								{(OptimizedPlanData?.distance) ? 
-									<div className="flex items-center gap-2 pb-2">
-										<div className="whitespace-nowrap min-w-20">Distance:</div>
-										<input
-											type="text"
-											className="bg-white rounded p-2 border grow opacity-50"
-											value={Math.round(OptimizedPlanData?.distance*100)/100}
-											disabled={true}
-										/>	
-										<div className="w-8">km</div>
-									</div>
-								:
-									<></>
-								}
-
-								{(OptimizedPlanData?.duration) ? 
-									<div className="flex items-center gap-2 pb-2">
-										<div className="whitespace-nowrap min-w-20">Duration:</div>
-										<input
-											type="text"
-											className="bg-white rounded p-2 border grow opacity-50"
-											value={Math.round(OptimizedPlanData?.duration*100)/100}
-											disabled={true}
-										/>	
-										<div className="w-8">min</div>
-									</div>									
-								:
-									<></>
-								}								
-							</div>
-							<div className="bg-amber-100 px-4 pb-4">												
-								<div className="flex justify-end pt-2">
-									<button onClick={planOptimized} className="bg-blue-600 text-white px-8 py-2 rounded cursor-pointer">
-										Plan
-									</button>
-								</div>										
-							</div>						
-						</div>	
-
-
-
-						<div className="grow flex flex-col">
-							<div className="font-bold bg-amber-200 p-4">
-								Step 4: Simulation
-							</div>
-							<div className="bg-amber-100 p-4 grow">
-								{renderSimulationInput(0, "Trip 1")}
-								{renderSimulationInput(1, "Trip 2")}
-								{renderSimulationInput(2, "Trip 3")}
-								{renderSimulationInput(3, "Trip 4")}	
-								{renderSimulationInput(4, "Trip 5")}																					
-							</div>						
-						</div>
-					</div>
-
-
 				</div>
+
+
+				<div className="flex flex-row gap-5">
+					<div className="grow flex flex-col">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 2: Manual Planning
+						</div>
+						<div className="bg-amber-100 p-4 grow">
+							{renderPlanningInput(0, "Trip 1", "manual", false)}
+							{renderPlanningInput(1, "Trip 2", "manual", false)}
+							{renderPlanningInput(2, "Trip 3", "manual", false)}
+							{renderPlanningInput(3, "Trip 4", "manual", false)}	
+							
+							{(manualPlanData?.distance) ? 
+								<div className="flex items-center gap-2 pb-2">
+									<div className="whitespace-nowrap min-w-20">Distance:</div>
+									<input
+										type="text"
+										className="bg-white rounded p-2 border grow opacity-50"
+										value={Math.round(manualPlanData?.distance*100)/100}
+										disabled={true}
+									/>	
+									<div className="w-8">km</div>
+								</div>
+							:
+								<></>
+							}
+
+							{(manualPlanData?.duration) ? 
+								<div className="flex items-center gap-2 pb-2">
+									<div className="whitespace-nowrap min-w-20">Duration:</div>
+									<input
+										type="text"
+										className="bg-white rounded p-2 border grow opacity-50"
+										value={Math.round(manualPlanData?.duration*100)/100}
+										disabled={true}
+									/>	
+									<div className="w-8">min</div>
+								</div>									
+							:
+								<></>
+							}								
+						</div>
+						<div className="bg-amber-100 px-4 pb-4">												
+							<div className="flex justify-end pt-2">
+								<button onClick={planManually} className={`${(isSimulating) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-green-600 text-white px-8 py-2 rounded`} disabled={(isSimulating)}>
+									Plan
+								</button>
+							</div>										
+						</div>		
+					</div>	
+
+
+
+					<div className="grow flex flex-col">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 3: Optimized Planning
+						</div>
+						<div className="bg-amber-100 p-4 grow">
+							{renderPlanningInput(0, "Trip 1", "optimized", true)}
+							{renderPlanningInput(1, "Trip 2", "optimized", true)}
+							{renderPlanningInput(2, "Trip 3", "optimized", true)}
+							{renderPlanningInput(3, "Trip 4", "optimized", true)}	
+
+							{(OptimizedPlanData?.distance) ? 
+								<div className="flex items-center gap-2 pb-2">
+									<div className="whitespace-nowrap min-w-20">Distance:</div>
+									<input
+										type="text"
+										className="bg-white rounded p-2 border grow opacity-50"
+										value={Math.round(OptimizedPlanData?.distance*100)/100}
+										disabled={true}
+									/>	
+									<div className="w-8">km</div>
+								</div>
+							:
+								<></>
+							}
+
+							{(OptimizedPlanData?.duration) ? 
+								<div className="flex items-center gap-2 pb-2">
+									<div className="whitespace-nowrap min-w-20">Duration:</div>
+									<input
+										type="text"
+										className="bg-white rounded p-2 border grow opacity-50"
+										value={Math.round(OptimizedPlanData?.duration*100)/100}
+										disabled={true}
+									/>	
+									<div className="w-8">min</div>
+								</div>									
+							:
+								<></>
+							}								
+						</div>
+						<div className="bg-amber-100 px-4 pb-4">												
+							<div className="flex justify-end pt-2">
+								<button onClick={planOptimized} className={`${(isSimulating) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-blue-600 text-white px-8 py-2 rounded`} disabled={(isSimulating)}>
+									Plan
+								</button>
+							</div>										
+						</div>						
+					</div>	
+
+
+
+					<div className="grow flex flex-col">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 4: Simulation
+						</div>
+						<div className="bg-amber-100 p-4 grow">
+							{renderSimulationInput(0, "Trip 1")}
+							{renderSimulationInput(1, "Trip 2")}
+							{renderSimulationInput(2, "Trip 3")}
+							{renderSimulationInput(3, "Trip 4")}	
+							{renderSimulationInput(4, "Trip 5")}	
+							{simulation.step}																				
+						</div>						
+					</div>
+				</div>
+
+
 			</div>
 		</div>
 	) : (<></>);
