@@ -39,6 +39,7 @@ export default function Home()
 
 
 
+
 	// Destinations A–D Info
 	const [destinations, setDestinations] = useState({
 		A: { lat: "", long: "" },
@@ -103,12 +104,10 @@ export default function Home()
 		}
 	});
 
-	
 
-	// Converts Long/Lat to Google Waypoints
-	const toWaypoint = ([lat, lng]) => ({
-		location: { latLng: { latitude: lat, longitude: lng } }
-	});
+
+	// polylines on the map
+	const [polylineVisibility, setPolylineVisibility] = useState({ manualPlan: true, manualActual: true, optimizedPlan: true, optimizedActual: true, heuristicPlan: true, huristicActual: true });
 
 
 
@@ -156,6 +155,17 @@ export default function Home()
 	};	
 
 	
+
+	const hideShowPolyline = (key) =>
+	{
+		let temp = {...polylineVisibility}
+
+		temp[key] = !polylineVisibility[key];
+		
+		setPolylineVisibility(temp);
+	}
+
+
 
 	// Render Depot & Initial Speed
 	const renderDepotAndInitialSpeed = () => (
@@ -806,11 +816,19 @@ export default function Home()
 
 
 
+	// Helper: Converts Long/Lat to Google Waypoints
+	const toWaypoint = ([lat, lng]) => ({
+		location: { latLng: { latitude: lat, longitude: lng } }
+	});
+
+
+
 	// Render FULL HTML
 	return isLoaded ? (
 		<div className="flex flex-col gap-5 p-5">
 			
-			{(isLoading) ?
+			{(isLoading)
+			?
 				<div className="fixed flex justify-center items-center bg-white opacity-90 w-full h-full z-50 top-0 left-0">
 					<img src="/loading.gif" width="40" height="40" alt="dynamic image"/>
 				</div>
@@ -818,10 +836,19 @@ export default function Home()
 				null
 			}
 			
-			<div className="fixed z-50 right-8 top-8">
+			<div className="fixed z-40 right-8 top-8">
 				<button onClick={() => { window.location.reload()}} className="bg-white text-gray-500 px-4 py-2 rounded cursor-pointer">
 					Reset
 				</button>
+			</div>
+
+			<div className="flex flex-col gap-2 fixed z-40 left-8 top-8">
+				<label><input checked={polylineVisibility?.manualPlan} type="checkbox" name="manualPlan" id="manualPlan" className="mr-2" onChange={() => hideShowPolyline("manualPlan")}/>Manual Planned</label>
+				<label><input checked={polylineVisibility?.manualActual} type="checkbox" name="manualActual" id="manualActual" className="mr-2" onChange={() => hideShowPolyline("manualActual")}/>Manual Actual</label>
+				<label><input checked={polylineVisibility?.optimizedPlan} type="checkbox" name="optimizedPlan" id="optimizedPlan" className="mr-2" onChange={() => hideShowPolyline("optimizedPlan")}/>Optimized Planned</label>
+				<label><input checked={polylineVisibility?.optimizedActual} type="checkbox" name="optimizedActual" id="optimizedActual" className="mr-2" onChange={() => hideShowPolyline("optimizedActual")}/>Optimized Actual</label>
+				<label><input checked={polylineVisibility?.heuristicPlan} type="checkbox" name="heuristicPlan" id="heuristicPlan" className="mr-2" onChange={() => hideShowPolyline("heuristicPlan")}/>Heuristic Planned</label>
+				<label><input checked={polylineVisibility?.huristicActual} type="checkbox" name="huristicActual" id="huristicActual" className="mr-2" onChange={() => hideShowPolyline("huristicActual")}/>Huristic Actual</label>
 			</div>
 
 			<div className="w-full h-[430px]">
@@ -833,36 +860,36 @@ export default function Home()
 					mapContainerStyle={{ width: '100%', height: '100%' }}
 					center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 				>
-					{(!isSimulating && manualPlanData?.polyline)
+					{(polylineVisibility?.manualPlan && !isSimulating && manualPlanData?.polyline)
 					?
-						null//<Polyline path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
+						<Polyline path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
 					:
 						null
 					}
 
-					{(!isSimulating && OptimizedPlanData?.polyline)
+					{(polylineVisibility?.optimizedPlan && !isSimulating && OptimizedPlanData?.polyline)
 					?
-						null//<Polyline path={OptimizedPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
+						<Polyline path={OptimizedPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
 					:
 						null
 					}	
 
 					
-					{(isSimulating && simulation?.polyline?.manual)
+					{(polylineVisibility?.manualActual && isSimulating && simulation?.polyline?.manual)
 					?
 						<Polyline path={simulation?.polyline?.manual} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
 					:
 						null
 					}
 
-					{(isSimulating && simulation?.polyline?.optimized)
+					{(polylineVisibility?.optimizedActual && isSimulating && simulation?.polyline?.optimized)
 					?
 						<Polyline path={simulation?.polyline?.optimized} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
 					:
 						null
 					}								
 
-					{(isSimulating && simulation?.polyline?.heuristic)
+					{(polylineVisibility?.huristicActual && isSimulating && simulation?.polyline?.heuristic)
 					?
 						<Polyline path={simulation?.polyline?.heuristic} options={{...polylineOptions, ...{fillColor: "#ff0000",strokeColor: "#ff0000"}}}/>
 					:
