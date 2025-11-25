@@ -14,7 +14,7 @@ export default function Home()
 {
 
 
-	
+
 	// Loading Spinner
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -52,6 +52,7 @@ export default function Home()
 	const [manualPlanData, setManualPlanData] = useState({});
 
 
+	
 	// Optimized Plan
 	const [optimizedPlan, setOptimizedPlan] = useState([]);
 	const [OptimizedPlanData, setOptimizedPlanData] = useState({});
@@ -490,6 +491,7 @@ export default function Home()
 	};
 
 
+
 	// Helper: Validate Optimized Planning
 	const isValideOptimizedPlanning = () =>
 	{
@@ -547,6 +549,8 @@ export default function Home()
 
 		return totalTimeMins;
 	};
+
+
 
 	// Render FULL HTML
 	return isLoaded ? (
