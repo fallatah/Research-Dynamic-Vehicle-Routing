@@ -405,7 +405,7 @@ export default function Home()
 
 
 	// Plan Optimized
-	const planOptimized = () =>
+	async function planOptimized()
 	{
 		let points = [];
 
@@ -422,75 +422,47 @@ export default function Home()
 		else if (!isValideSetOfCoordinates(points)) {
 			alert("❌ Invalid Latitude/Longitude Values");
 		}
-		else {
-			getFullPathUsingHTTPS();
-		}
-	}	
-
-
-
-	// Get optimized rout using HTTPS
-	async function getFullPathUsingHTTPS()
-	{
-		setIsLoading(true);
-
-		let intermediates = [];
-		let unorderedDestinations = [];
-
-		Object.keys(destinations)?.forEach(key => {
-			intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
-			unorderedDestinations.push(key)
-		});
-
-		const body = {
-			origin: toWaypoint([depot?.lat, depot?.long]),
-			destination: toWaypoint([depot?.lat, depot?.long]),
-			intermediates: intermediates,
-			travelMode: "DRIVE",
-			// routingPreference: "TRAFFIC_AWARE",
-			languageCode: "en-US",
-			units: "METRIC",
-			optimizeWaypointOrder:"true"
-		};
-
-		const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",
-		{
-			method: "POST",
-			headers: {
-			"Content-Type": "application/json",
-			"X-Goog-Api-Key": process.env.NEXT_PUBLIC_MAP_API_KEY,
-			"X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.optimizedIntermediateWaypointIndex"
-			},
-			body: JSON.stringify(body)
-		});
-
-  		const data = await res.json();
-
-		setIsLoading(false);
-
-		if(data?.routes[0])
-		{
-			const route = data.routes[0];
-	
-			let distance = route.distanceMeters * 0.001;
-			let duration = Math.floor(parseInt(route?.duration?.replace("s", ""), 10)/60);
-			let polyline = decodePolyline(route.polyline.encodedPolyline);
-			let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => unorderedDestinations?.[i]);
-
-			setOptimizedPlan(newOrder);
-			setOptimizedPlanData({distance:distance, duration:duration, polyline:polyline})
-			
-			alert("✅ Planning Completed");
-		}
 		else
 		{
-			alert("❌ Failed to reach Google Server");
+			let start 				  = toWaypoint([depot?.lat, depot?.long]);
+			let end 				  = toWaypoint([depot?.lat, depot?.long]);
+			let intermediates 		  = [];
+			let unorderedDestinations = [];
+
+			Object.keys(destinations)?.forEach(key => {
+				intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+				unorderedDestinations.push(key)
+			});
+
+			setIsLoading(true);
+
+			const route = await getPathFromGoogleMap(start, intermediates, end);
+
+			setIsLoading(false);
+
+			if(route?.distanceMeters)
+			{	
+				let distance = route.distanceMeters * 0.001;
+				let duration = Math.floor(parseInt(route?.duration?.replace("s", ""), 10)/60);
+				let polyline = decodePolyline(route.polyline.encodedPolyline);
+				let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => unorderedDestinations?.[i]);
+
+				setOptimizedPlan(newOrder);
+				setOptimizedPlanData({distance:distance, duration:duration, polyline:polyline})
+				
+				alert("✅ Planning Completed");
+			}
+			else
+			{
+				alert("❌ Failed to reach Google Server");
+			}			
 		}
-	};
+	}
 
 
-	// Get optimized rout using HTTPS
-	async function getPartialPathUsingHTTP(start, intermediates, end)
+	
+	// Get optimized rout from Google Map
+	async function getPathFromGoogleMap(start, intermediates, end)
 	{
 		const body = {
 			origin: start,
@@ -573,7 +545,7 @@ export default function Home()
 					intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
 				});
 
-				let partialPath = await getPartialPathUsingHTTP(start, intermediates, end);
+				let partialPath = await getPathFromGoogleMap(start, intermediates, end);
 
 				console.log("partialPath", partialPath)
 
