@@ -521,7 +521,7 @@ export default function Home()
 
 			setIsSimulating(true);
 
-			//setSimulation(prev => ({...prev, step: prev.step+1})); // for testing
+			setSimulation(prev => ({...prev, step: prev.step+1}));
 
 			
 			
@@ -615,31 +615,83 @@ export default function Home()
 
 
 
-			// Calculate distance for each
+			// Calculate distance, duration & polyline for manual, optimized & huristic
+			let newDistance = { manual:0.0, optimized:0.0, heuristic:0.0};
+			let newDuration = { manual:0.0, optimized:0.0, heuristic:0.0};
+			let newPolyline = { manual:[], optimized:[], heuristic:[]};
 
+			if(newPath?.manual?.length > 0)
+			{
+				let start 		  = toWaypoint([depot.lat, depot.long]);
+				let end   		  = toWaypoint([destinations[newPath?.manual[newPath?.manual?.length-1]]?.lat, destinations[newPath?.manual[newPath?.manual?.length-1]]?.long]);
+				let intermediates = [];
 
+				newPath?.manual.forEach(key =>
+				{
+					intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+				});
 
-			// Calculate duration for each 
+				intermediates.pop();
 
+				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end);
 
+				newDistance.manual = actualRoute?.distanceMeters * 0.001;
+				newDuration.manual = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60);
+				newPolyline.manual = decodePolyline(actualRoute.polyline.encodedPolyline);					
+			}
 
-			// Calculate polyline for each
+			if(newPath?.optimized?.length > 0)
+			{
+				let start 		  = toWaypoint([depot.lat, depot.long]);
+				let end   		  = toWaypoint([destinations[newPath?.optimized[newPath?.optimized?.length-1]]?.lat, destinations[newPath?.optimized[newPath?.optimized?.length-1]]?.long]);
+				let intermediates = [];
 
+				newPath?.optimized.forEach(key =>
+				{
+					intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+				});
+
+				intermediates.pop();
+
+				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end);
+
+				newDistance.optimized = actualRoute?.distanceMeters * 0.001;
+				newDuration.optimized = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60);
+				newPolyline.optimized = decodePolyline(actualRoute.polyline.encodedPolyline);					
+			}
+
+			if(newPath?.heuristic?.length > 0)
+			{
+				let start 		  = toWaypoint([depot.lat, depot.long]);
+				let end   		  = toWaypoint([destinations[newPath?.heuristic[newPath?.heuristic?.length-1]]?.lat, destinations[newPath?.heuristic[newPath?.heuristic?.length-1]]?.long]);
+				let intermediates = [];
+
+				newPath?.heuristic.forEach(key =>
+				{
+					intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+				});
+
+				intermediates.pop();
+
+				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end);
+
+				newDistance.heuristic = actualRoute?.distanceMeters * 0.001;
+				newDuration.heuristic = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60);
+				newPolyline.heuristic = decodePolyline(actualRoute.polyline.encodedPolyline);					
+			}
+
+			
 
 
 			// Update Values 
-			//setSimulation(prev => ({ ...prev, path: newPath })); // for testing
-			//setSimulation(prev => ({ ...prev, distance: newDistance }));
-			//setSimulation(prev => ({ ...prev, duration: newDuration }));
-			//setSimulation(prev => ({ ...prev, polyline: newPolyline }));
+			setSimulation(prev => ({ ...prev, path: newPath }));
+			setSimulation(prev => ({ ...prev, distance: newDistance }));
+			setSimulation(prev => ({ ...prev, duration: newDuration }));
+			setSimulation(prev => ({ ...prev, polyline: newPolyline }));
 			
-			setIsLoading(false);
 
-			//console.log("id", id);
-			//console.log("newPath", newPath)
-			//console.log("manual", manualPlan);
-			//console.log("optimized", optimizedPlan);
-			console.log(newPath)
+
+			setIsLoading(false);
 		}
 	};
 
@@ -751,7 +803,7 @@ export default function Home()
 					<img src="/loading.gif" width="40" height="40" alt="dynamic image"/>
 				</div>
 			:
-				<></>
+				null
 			}
 			
 			<div className="fixed z-50 right-8 top-8">
@@ -760,7 +812,7 @@ export default function Home()
 				</button>
 			</div>
 
-			<div className="w-full h-[450px]">
+			<div className="w-full h-[430px]">
 				<GoogleMap
 					id={"google-map-view"}
 					zoom={11}
@@ -836,7 +888,6 @@ export default function Home()
 
 
 
-
 					<div className="w-[25%] flex flex-col">
 						<div className="font-bold bg-amber-200 p-4">
 							Step 2: Manual Planning
@@ -859,7 +910,7 @@ export default function Home()
 									<div className="w-8">km</div>
 								</div>
 							:
-								<></>
+								null
 							}
 
 							{(manualPlanData?.duration) ? 
@@ -874,16 +925,59 @@ export default function Home()
 									<div className="w-8">min</div>
 								</div>									
 							:
-								<></>
-							}								
+								null
+							}	
 						</div>
-						<div className="bg-amber-100 px-4 pb-4">												
-							<div className="flex justify-end pt-2">
-								<button onClick={planManually} className={`${(isSimulating) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-green-600 text-white px-8 py-2 rounded`} disabled={(isSimulating)}>
-									Plan
-								</button>
-							</div>										
-						</div>		
+						{(isSimulating)
+						?
+							<div className="bg-amber-200 p-4 grow">
+								{(simulation?.distance?.manual) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Distance:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.distance?.manual*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">km</div>
+									</div>
+								:
+									null
+								}
+
+								{(simulation?.duration?.manual) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Duration:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.duration?.manual*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">min</div>
+									</div>									
+								:
+									null
+								}							
+							</div>
+						:
+							null
+						}
+
+						{(!isSimulating)
+						?
+							<div className="bg-amber-100 px-4 pb-4">												
+								<div className="flex justify-end pt-2">
+									<button onClick={planManually} className={`${(isSimulating) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-green-600 text-white px-8 py-2 rounded`} disabled={(isSimulating)}>
+										Plan
+									</button>
+								</div>										
+							</div>
+						:
+							null
+						}	
+
 					</div>	
 
 
@@ -910,7 +1004,7 @@ export default function Home()
 									<div className="w-8">km</div>
 								</div>
 							:
-								<></>
+								null
 							}
 
 							{(OptimizedPlanData?.duration) ? 
@@ -925,16 +1019,58 @@ export default function Home()
 									<div className="w-8">min</div>
 								</div>									
 							:
-								<></>
-							}								
+								null
+							}	
 						</div>
-						<div className="bg-amber-100 px-4 pb-4">												
-							<div className="flex justify-end pt-2">
-								<button onClick={planOptimized} className={`${(isSimulating) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-blue-600 text-white px-8 py-2 rounded`} disabled={(isSimulating)}>
-									Plan
-								</button>
-							</div>										
-						</div>						
+						{(isSimulating)
+						?
+							<div className="bg-amber-200 p-4 grow">
+								{(simulation?.distance?.optimized) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Distance:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.distance?.optimized*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">km</div>
+									</div>
+								:
+									null
+								}
+
+								{(simulation?.duration?.optimized) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Duration:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.duration?.optimized*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">min</div>
+									</div>									
+								:
+									null
+								}														
+							</div>
+						:
+							null
+						}
+
+						{(!isSimulating)
+						?
+							<div className="bg-amber-100 px-4 pb-4">												
+								<div className="flex justify-end pt-2">
+									<button onClick={planOptimized} className={`${(isSimulating) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-blue-600 text-white px-8 py-2 rounded`} disabled={(isSimulating)}>
+										Plan
+									</button>
+								</div>										
+							</div>	
+						:
+							null
+						}					
 					</div>	
 
 
@@ -962,7 +1098,7 @@ export default function Home()
 									<div className="w-8">km</div>
 								</div>
 							:
-								<></>
+								null
 							}
 
 							{(heuristicPlanData?.duration) ? 
@@ -977,11 +1113,47 @@ export default function Home()
 									<div className="w-8">min</div>
 								</div>									
 							:
-								<></>
-							}								
+								null
+							}
 						</div>
-					
+						{(isSimulating)
+						?
+							<div className="bg-amber-200 p-4 grow">
+								{(simulation?.distance?.heuristic) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Distance:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.distance?.heuristic*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">km</div>
+									</div>
+								:
+									null
+								}
+
+								{(simulation?.duration?.heuristic) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Duration:</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.duration?.heuristic*100)/100}
+											disabled={true}
+										/>	
+										<div className="w-8">min</div>
+									</div>									
+								:
+									null
+								}
+							</div>
+						:
+							null
+						}
 					</div>	
+
 
 
 					<div className="w-[25%] flex flex-col">
@@ -996,7 +1168,6 @@ export default function Home()
 							{renderSimulationInput(4, "Trip 5")}	
 						</div>						
 					</div>
-
 
 
 
