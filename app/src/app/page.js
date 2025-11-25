@@ -62,7 +62,7 @@ export default function Home()
 
 	// Heuristic Plan
 	const [heuristicPlan, setHeuristicPlan] = useState([]);
-	
+	const [heuristicPlanData, setHeuristicPlanData] = useState({});
 
 
 	// simulation
@@ -169,18 +169,18 @@ export default function Home()
 	const renderDepotAndInitialSpeed = () => (
 		<>
 			<div className="flex items-center gap-2 pb-2">
-				<div className="w-32 whitespace-nowrap">Speed Limit (km):</div>
+				<div className="w-26 whitespace-nowrap">Speed (km):</div>
 				<input
 					type="text"
 					placeholder="Speed"
-					className={`bg-white rounded p-2 border w-24 ${(isSimulating) ? "opacity-50" : ""}`}
+					className={`bg-white rounded p-2 border w-20 ${(isSimulating) ? "opacity-50" : ""}`}
 					value={startingSpeed}
 					onChange={e => handleSpeedChange(e.target.value)}
 					disabled={isSimulating}
 				/>
 			</div>
 			<div className="flex items-center gap-2 pb-2">
-				<div className="w-32 whitespace-nowrap">Depot:</div>
+				<div className="w-26 whitespace-nowrap">Depot:</div>
 				<input
 					type="text"
 					placeholder="Latitude"
@@ -206,7 +206,7 @@ export default function Home()
 	// Render Long & Lat for Each Destination
 	const renderDestinationInput = (id, label) => (
 		<div className="flex items-center gap-2 pb-2">
-			<div className="w-32 whitespace-nowrap">{label}:</div>
+			<div className="w-26 whitespace-nowrap">{label}:</div>
 			<input
 				type="text"
 				placeholder="Latitude"
@@ -228,13 +228,13 @@ export default function Home()
 
 
 
-	// Render Manual Planning Input
+	// Render Planning Input
 	const renderPlanningInput = (id, label, groupName, isReadOnly) => (
 		<div className="flex items-center gap-2 pb-2">
 			<div className="min-w-20 whitespace-nowrap">{label}:</div>
 			<select
-				className={`grow bg-white rounded p-2 border w-48 ${(isReadOnly || isSimulating) ? "opacity-50" : ""}`}
-				value={(groupName === "manual" && manualPlan?.[id]) ? manualPlan?.[id] : (groupName === "optimized" && optimizedPlan?.[id]) ? optimizedPlan?.[id] : ""}
+				className={`grow bg-white w-12 rounded p-2 border ${(isReadOnly || isSimulating) ? "opacity-50" : ""}`}
+				value={(groupName === "manual" && manualPlan?.[id]) ? manualPlan?.[id] : (groupName === "optimized" && optimizedPlan?.[id]) ? optimizedPlan?.[id] : (groupName === "heuristic" && heuristicPlan?.[id]) ? heuristicPlan?.[id] : ""}
 				onChange={e => handlePlanningInputChange(id, e.target.value)}
 				disabled={(isReadOnly || isSimulating)}
 			>
@@ -253,14 +253,14 @@ export default function Home()
 	const renderSimulationInput = (id, label) =>
 	( 
 		<div className="flex items-center gap-2 pb-2">
-			<div className="pe-4 whitespace-nowrap">{label}:</div>
-			<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-violet-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, false)}>
+			<div className="pe-4 whitespace-nowrap w-16">{label}:</div>
+			<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-violet-600 text-white px-2 py-2 rounded grow`} disabled={(simulation.step > id)} onClick={() => simulate(id, false)}>
 				Proceed
 			</button>
 
 			{(id <= 3)
 			?
-				<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-rose-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, true)}>
+				<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-rose-600 text-white px-2 py-2 rounded grow`} disabled={(simulation.step > id)} onClick={() => simulate(id, true)}>
 					Traffic
 				</button>
 			:
@@ -353,6 +353,7 @@ export default function Home()
 			setManualPlan([]);
 			setOptimizedPlan([]);
 			setHeuristicPlan([]);
+			setHeuristicPlanData([]);
 		}
 		
 	};
@@ -457,6 +458,7 @@ export default function Home()
 				setOptimizedPlan(newOrder);
 				setHeuristicPlan(newOrder);
 				setOptimizedPlanData({distance:distance, duration:duration, polyline:polyline});
+				setHeuristicPlanData({distance:distance, duration:duration, polyline:polyline});
 				
 				alert("✅ Planning Completed");
 			}
@@ -522,7 +524,7 @@ export default function Home()
 
 			setIsSimulating(true);
 
-			setSimulation(prev => ({...prev, step: prev.step+1})); // for testing
+			//setSimulation(prev => ({...prev, step: prev.step+1})); // for testing
 
 			
 			
@@ -629,7 +631,7 @@ export default function Home()
 
 
 			// Update Values 
-			setSimulation(prev => ({ ...prev, path: newPath })); // for testing
+			//setSimulation(prev => ({ ...prev, path: newPath })); // for testing
 			//setSimulation(prev => ({ ...prev, distance: newDistance }));
 			//setSimulation(prev => ({ ...prev, duration: newDuration }));
 			//setSimulation(prev => ({ ...prev, polyline: newPolyline }));
@@ -747,14 +749,14 @@ export default function Home()
 	return isLoaded ? (
 		<div className="flex flex-col gap-5 p-5">
 			
-			{/* {(isLoading) ?
+			{(isLoading) ?
 				<div className="fixed flex justify-center items-center bg-white opacity-90 w-full h-full z-50 top-0 left-0">
 					<img src="/loading.gif" width="40" height="40" alt="dynamic image"/>
 				</div>
 			:
 				<></>
 			}
-			 */}
+			
 			<div className="text-right">
 				<button onClick={() => { window.location.reload()}} className="bg-amber-500 text-white px-4 py-2 rounded cursor-pointer">
 					Reset
@@ -810,7 +812,7 @@ export default function Home()
 
 
 
-				<div className="grow">
+				<div className="w-[2/6]">
 					<div className="flex flex-col h-full">							
 						<div className="font-bold bg-amber-200 p-4">
 							Step 1: Destinations
@@ -833,8 +835,8 @@ export default function Home()
 				</div>
 
 
-				<div className="flex flex-row gap-5">
-					<div className="grow flex flex-col">
+				<div className="flex flex-row gap-5 grow">
+					<div className="w-[25%] flex flex-col">
 						<div className="font-bold bg-amber-200 p-4">
 							Step 2: Manual Planning
 						</div>
@@ -846,10 +848,10 @@ export default function Home()
 							
 							{(manualPlanData?.distance) ? 
 								<div className="flex items-center gap-2 pb-2">
-									<div className="whitespace-nowrap min-w-20">Distance:</div>
+									<div className="whitespace-nowrap w-20">Distance:</div>
 									<input
 										type="text"
-										className="bg-white rounded p-2 border grow opacity-50"
+										className="bg-white rounded p-2 border grow opacity-50 w-12"
 										value={Math.round(manualPlanData?.distance*100)/100}
 										disabled={true}
 									/>	
@@ -861,10 +863,10 @@ export default function Home()
 
 							{(manualPlanData?.duration) ? 
 								<div className="flex items-center gap-2 pb-2">
-									<div className="whitespace-nowrap min-w-20">Duration:</div>
+									<div className="whitespace-nowrap w-20">Duration:</div>
 									<input
 										type="text"
-										className="bg-white rounded p-2 border grow opacity-50"
+										className="bg-white rounded p-2 border grow opacity-50 w-12"
 										value={Math.round(manualPlanData?.duration*100)/100}
 										disabled={true}
 									/>	
@@ -885,7 +887,7 @@ export default function Home()
 
 
 
-					<div className="grow flex flex-col">
+					<div className="w-[25%] flex flex-col">
 						<div className="font-bold bg-amber-200 p-4">
 							Step 3: Optimized Planning
 						</div>
@@ -897,10 +899,10 @@ export default function Home()
 
 							{(OptimizedPlanData?.distance) ? 
 								<div className="flex items-center gap-2 pb-2">
-									<div className="whitespace-nowrap min-w-20">Distance:</div>
+									<div className="whitespace-nowrap w-20">Distance:</div>
 									<input
 										type="text"
-										className="bg-white rounded p-2 border grow opacity-50"
+										className="bg-white rounded p-2 border grow opacity-50 w-12"
 										value={Math.round(OptimizedPlanData?.distance*100)/100}
 										disabled={true}
 									/>	
@@ -912,10 +914,10 @@ export default function Home()
 
 							{(OptimizedPlanData?.duration) ? 
 								<div className="flex items-center gap-2 pb-2">
-									<div className="whitespace-nowrap min-w-20">Duration:</div>
+									<div className="whitespace-nowrap w-20">Duration:</div>
 									<input
 										type="text"
-										className="bg-white rounded p-2 border grow opacity-50"
+										className="bg-white rounded p-2 border grow opacity-50 w-12"
 										value={Math.round(OptimizedPlanData?.duration*100)/100}
 										disabled={true}
 									/>	
@@ -936,7 +938,7 @@ export default function Home()
 
 
 
-					<div className="grow flex flex-col">
+					<div className="w-[25%] flex flex-col">
 						<div className="font-bold bg-amber-200 p-4">
 							Step 4: Simulation
 						</div>
@@ -946,9 +948,56 @@ export default function Home()
 							{renderSimulationInput(2, "Trip 3")}
 							{renderSimulationInput(3, "Trip 4")}	
 							{renderSimulationInput(4, "Trip 5")}	
-							{simulation.step}																				
 						</div>						
 					</div>
+
+
+
+					<div className="w-[25%] flex flex-col">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 5: Heuristic Planning
+						</div>
+						<div className="bg-amber-100 p-4 grow">
+							{renderPlanningInput(0, "Trip 1", "heuristic", true)}
+							{renderPlanningInput(1, "Trip 2", "heuristic", true)}
+							{renderPlanningInput(2, "Trip 3", "heuristic", true)}
+							{renderPlanningInput(3, "Trip 4", "heuristic", true)}	
+
+							{(heuristicPlanData?.distance) ? 
+								<div className="flex items-center gap-2 pb-2">
+									<div className="whitespace-nowrap w-20">Distance:</div>
+									<input
+										type="text"
+										className="bg-white rounded p-2 border grow opacity-50 w-12"
+										value={Math.round(heuristicPlanData?.distance*100)/100}
+										disabled={true}
+									/>	
+									<div className="w-8">km</div>
+								</div>
+							:
+								<></>
+							}
+
+							{(heuristicPlanData?.duration) ? 
+								<div className="flex items-center gap-2 pb-2">
+									<div className="whitespace-nowrap w-20">Duration:</div>
+									<input
+										type="text"
+										className="bg-white rounded p-2 border grow opacity-50 w-12"
+										value={Math.round(heuristicPlanData?.duration*100)/100}
+										disabled={true}
+									/>	
+									<div className="w-8">min</div>
+								</div>									
+							:
+								<></>
+							}								
+						</div>
+					
+					</div>	
+
+
+				
 				</div>
 
 
