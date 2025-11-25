@@ -59,6 +59,12 @@ export default function Home()
 	const [OptimizedPlanData, setOptimizedPlanData] = useState({});
 
 
+
+	// Heuristic Plan
+	const [heuristicPlan, setHeuristicPlan] = useState([]);
+	
+
+
 	// simulation
 	const [simulation, setSimulation] = useState(
 	{
@@ -346,6 +352,7 @@ export default function Home()
 			setOptimizedPlanData({});
 			setManualPlan([]);
 			setOptimizedPlan([]);
+			setHeuristicPlan([]);
 		}
 		
 	};
@@ -448,7 +455,8 @@ export default function Home()
 				let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => unorderedDestinations?.[i]);
 
 				setOptimizedPlan(newOrder);
-				setOptimizedPlanData({distance:distance, duration:duration, polyline:polyline})
+				setHeuristicPlan(newOrder);
+				setOptimizedPlanData({distance:distance, duration:duration, polyline:polyline});
 				
 				alert("✅ Planning Completed");
 			}
@@ -514,7 +522,7 @@ export default function Home()
 
 			setIsSimulating(true);
 
-			//setSimulation(prev => ({...prev, step: prev.step+1}));
+			//setSimulation(prev => ({...prev, step: prev.step+1})); // for testing
 
 			
 			
@@ -525,13 +533,13 @@ export default function Home()
 
 
 
-			// if there is traffic, heuristic should find next nearest location
+			// if there is traffic, heuristic should find next nearest location (other than the very next one)
 			if(foundTraffic)
 			{
 				let start 				  = toWaypoint([depot.lat, depot.long]);
 				let end 				  = toWaypoint([depot.lat, depot.long]);
 				let intermediates 		  = [];
-				let remainingDistinations = optimizedPlan.filter(item => !newPath.heuristic.includes(item));
+				let remainingDistinations = heuristicPlan.filter(item => !newPath.heuristic.includes(item));
 
 				if(newPath.heuristic?.length > 0)
 				{
@@ -545,11 +553,38 @@ export default function Home()
 					intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
 				});
 
-				let route = await getPathFromGoogleAPI(start, intermediates, end);
 
-				let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => remainingDistinations?.[i]);
+				let nextDestination = undefined;
 
-				console.log("route", newOrder)
+				if(intermediates.length > 2)
+				{
+					// exclude the very first
+					intermediates?.shift();
+					remainingDistinations?.shift();
+
+					let newRoute = await getPathFromGoogleAPI(start, intermediates, end);
+					
+					let newOrder = newRoute.optimizedIntermediateWaypointIndex?.map(i => remainingDistinations?.[i]);
+
+					nextDestination = newOrder[0];	
+				}
+				else if(intermediates.length == 2)
+				{
+					nextDestination = remainingDistinations[1];
+				}
+				else if(intermediates.length == 1)
+				{
+					nextDestination = remainingDistinations[0];
+				}				
+
+				newPath.heuristic.push(nextDestination);
+
+				remainingDistinations = heuristicPlan.filter(item => !newPath.heuristic.includes(item));
+
+				console.log("new order", [...newPath.heuristic, ...remainingDistinations]);
+
+
+				
 
 				// // find next nearest location using google
 				// let xxx = 0;
@@ -566,7 +601,7 @@ export default function Home()
 			}
 			else
 			{
-				newPath.heuristic.push(optimizedPlan[id]);
+				newPath.heuristic.push(heuristicPlan[id]);
 			}
 
 
@@ -584,7 +619,7 @@ export default function Home()
 
 
 			// Update Values 
-			//setSimulation(prev => ({ ...prev, path: newPath }));
+			//setSimulation(prev => ({ ...prev, path: newPath })); // for testing
 			//setSimulation(prev => ({ ...prev, distance: newDistance }));
 			//setSimulation(prev => ({ ...prev, duration: newDuration }));
 			//setSimulation(prev => ({ ...prev, polyline: newPolyline }));
@@ -702,14 +737,14 @@ export default function Home()
 	return isLoaded ? (
 		<div className="flex flex-col gap-5 p-5">
 			
-			{(isLoading) ?
+			{/* {(isLoading) ?
 				<div className="fixed flex justify-center items-center bg-white opacity-90 w-full h-full z-50 top-0 left-0">
 					<img src="/loading.gif" width="40" height="40" alt="dynamic image"/>
 				</div>
 			:
 				<></>
 			}
-			
+			 */}
 			<div className="text-right">
 				<button onClick={() => { window.location.reload()}} className="bg-amber-500 text-white px-4 py-2 rounded cursor-pointer">
 					Reset
