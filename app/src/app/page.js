@@ -436,7 +436,7 @@ export default function Home()
 
 			setIsLoading(true);
 
-			const route = await getPathFromGoogleMap(start, intermediates, end);
+			const route = await getPathFromGoogleAPI(start, intermediates, end);
 
 			setIsLoading(false);
 
@@ -460,9 +460,9 @@ export default function Home()
 	}
 
 
-	
-	// Get optimized rout from Google Map
-	async function getPathFromGoogleMap(start, intermediates, end)
+
+	// Get optimized rout from Google Route API
+	async function getPathFromGoogleAPI(start, intermediates, end)
 	{
 		const body = {
 			origin: start,
@@ -545,9 +545,11 @@ export default function Home()
 					intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
 				});
 
-				let partialPath = await getPathFromGoogleMap(start, intermediates, end);
+				let route = await getPathFromGoogleAPI(start, intermediates, end);
 
-				console.log("partialPath", partialPath)
+				let newOrder = route.optimizedIntermediateWaypointIndex?.map(i => remainingDistinations?.[i]);
+
+				console.log("route", newOrder)
 
 				// // find next nearest location using google
 				// let xxx = 0;
