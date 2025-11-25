@@ -154,9 +154,10 @@ export default function Home()
 				<input
 					type="text"
 					placeholder="Speed"
-					className="bg-white rounded p-2 border w-24"
+					className={`bg-white rounded p-2 border w-24 ${(isSimulating) ? "opacity-50" : ""}`}
 					value={startingSpeed}
 					onChange={e => handleSpeedChange(e.target.value)}
+					disabled={isSimulating}
 				/>
 			</div>
 			<div className="flex items-center gap-2 pb-2">
@@ -164,16 +165,18 @@ export default function Home()
 				<input
 					type="text"
 					placeholder="Latitude"
-					className="bg-white rounded p-2 border grow"
+				className={`bg-white rounded p-2 border grow ${(isSimulating) ? "opacity-50" : ""}`}
 					value={depot.lat}
 					onChange={e => handleDepotChange("lat", e.target.value)}
+					disabled={isSimulating}
 				/>
 				<input
 					type="text"
 					placeholder="Longitude"
-					className="bg-white rounded p-2 border grow"
+				className={`bg-white rounded p-2 border grow ${(isSimulating) ? "opacity-50" : ""}`}
 					value={depot.long}
 					onChange={e => handleDepotChange("long", e.target.value)}
+					disabled={isSimulating}
 				/>
 			</div>			
 		</>
@@ -188,16 +191,18 @@ export default function Home()
 			<input
 				type="text"
 				placeholder="Latitude"
-				className="bg-white rounded p-2 border grow"
+				className={`bg-white rounded p-2 border grow ${(isSimulating) ? "opacity-50" : ""}`}
 				value={destinations[id].lat}
 				onChange={e => handleDestinationChange(id, "lat", e.target.value)}
+				disabled={isSimulating}
 			/>
 			<input
 				type="text"
 				placeholder="Longitude"
-				className="bg-white rounded p-2 border grow"
+				className={`bg-white rounded p-2 border grow ${(isSimulating) ? "opacity-50" : ""}`}
 				value={destinations[id].long}
 				onChange={e => handleDestinationChange(id, "long", e.target.value)}
+				disabled={isSimulating}
 			/>
 		</div>
 	);	
@@ -209,10 +214,10 @@ export default function Home()
 		<div className="flex items-center gap-2 pb-2">
 			<div className="min-w-20 whitespace-nowrap">{label}:</div>
 			<select
-				className={`grow bg-white rounded p-2 border w-48 ${(isReadOnly) ? "opacity-50" : ""}`}
+				className={`grow bg-white rounded p-2 border w-48 ${(isReadOnly || isSimulating) ? "opacity-50" : ""}`}
 				value={(groupName === "manual" && manualPlan?.[id]) ? manualPlan?.[id] : (groupName === "optimized" && optimizedPlan?.[id]) ? optimizedPlan?.[id] : ""}
 				onChange={e => handlePlanningInputChange(id, e.target.value)}
-				disabled={isReadOnly}
+				disabled={(isReadOnly || isSimulating)}
 			>
 				<option value="">{(isReadOnly) ? "TBD" : "Select"}</option>
 				<option value="A">A</option>
