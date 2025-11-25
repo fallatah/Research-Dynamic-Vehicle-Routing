@@ -10,9 +10,11 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Polyline } from '@react-
 
 import decodePolyline from "decode-google-map-polyline";
 
-export default function Home() {
+export default function Home()
+{
 
 
+	
 	// Loading Spinner
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -26,11 +28,7 @@ export default function Home() {
 
 	// Road speed in KPH
 	const [startingSpeed, setStartingSpeed] = useState(20.0);
-	const [speedForTrip1, setSpeedForTrip1] = useState(20.0);
-	const [speedForTrip2, setSpeedForTrip2] = useState(20.0);
-	const [speedForTrip3, setSpeedForTrip3] = useState(20.0);
-	const [speedForTrip4, setSpeedForTrip4] = useState(20.0);
-	const [speedForTrip5, setSpeedForTrip5] = useState(20.0);
+
 	
 	
 
@@ -130,7 +128,7 @@ export default function Home() {
 					placeholder="Speed"
 					className="bg-white rounded p-2 border w-24"
 					value={startingSpeed}
-					onChange={e => handleSpeedChange("starting", e.target.value)}
+					onChange={e => handleSpeedChange(e.target.value)}
 				/>
 			</div>
 			<div className="flex items-center gap-2 pb-2">
@@ -204,16 +202,11 @@ export default function Home() {
 	( 
 		<div className="flex items-center gap-2 pb-2">
 			<div className="pe-4 whitespace-nowrap">{label}:</div>
-			<input
-				type="text"
-				placeholder="Speed"
-				className="bg-white rounded p-2 border w-20"
-				defaultValue={(id===1) ? speedForTrip1 : (id===2) ? speedForTrip2 : (id===3) ? speedForTrip3 : (id===4) ? speedForTrip4 : (id===5) ? speedForTrip5 : ""}
-				onChange={e => handleSpeedChange(id, e.target.value)}
-			/>	
-			<div className="p-3">km</div>
-			<button className="bg-black text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id)}>
-				Simulate
+			<button className="bg-violet-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id, true)}>
+				Proceed
+			</button>
+			<button className="bg-rose-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id, false)}>
+				Traffic
 			</button>
 		</div>
 	);
@@ -221,7 +214,7 @@ export default function Home() {
 
 
 	// Handle Speed Cahnge
-	const handleSpeedChange = (id, value) =>
+	const handleSpeedChange = (value) =>
 	{
 		let num = "";
 
@@ -231,30 +224,7 @@ export default function Home() {
 			num = Number.isInteger(parsed) && parsed >= 0 ? parsed : "";
 		}
 
-		if(id === 1)
-		{
-			setSpeedForTrip1(num);
-		}
-		else if(id === 2)
-		{
-			setSpeedForTrip2(num);
-		}
-		else if(id === 3)
-		{
-			setSpeedForTrip3(num);
-		}
-		else if(id === 4)
-		{
-			setSpeedForTrip4(num);
-		}
-		else if(id === 5)
-		{
-			setSpeedForTrip5(num);
-		}
-		else
-		{
-			setStartingSpeed(num);
-		}
+		setStartingSpeed(num);
 	};
 
 
@@ -285,7 +255,14 @@ export default function Home() {
 		});
 	};
 	
+
 	
+	// Handle Destination Cahnge
+	const handlePlanningDataChange = () => {
+		// to do
+	};
+
+
 
 	// Generate Sample Locations
 	const generateSampleLocations = () => {
@@ -313,6 +290,13 @@ export default function Home() {
 		handleDestinationChange("C", "long", (baseLong + jitter()).toFixed(6));
 		handleDestinationChange("D", "lat", (baseLat + jitter()).toFixed(6));
 		handleDestinationChange("D", "long", (baseLong + jitter()).toFixed(6));
+
+		handlePlanningDataChange();
+
+		setManualPlanData({})
+		setOptimizedPlanData({})
+		setManualPlan([]);
+		setOptimizedPlan([]);
 	};
 
 
@@ -354,7 +338,7 @@ export default function Home() {
 
 				setManualPlanData({distance:distance, duration:time, polyline:polyline})
 
-				alert(`✅ Planning Completed\n\n📍 Route: Depot -> ${points?.[0]?.label} -> ${points?.[1]?.label} -> ${points?.[2]?.label} -> ${points?.[3]?.label} -> Depot\n🚚 Distance: ${Math.round(distance*100)/100} km\n🕒 Time: ${Math.round(time*100)/100} min\n🛞 Avg. Speed: ${startingSpeed} kph`);
+				alert(`✅ Planning Completed`);
 			}
 			else
 			{
@@ -452,7 +436,7 @@ export default function Home() {
 
 
 	// Simulate
-	const simulate = (trip) =>
+	const simulate = (trip, shouldProceed) =>
 	{
 		if (!isValideManualPlanning()) {
 			alert("❌ You should plan manually first");
@@ -758,10 +742,10 @@ export default function Home() {
 								Step 4: Simulation
 							</div>
 							<div className="bg-amber-100 p-4 grow">
-								{renderSimulationInput(1, "Trip 1")}
-								{renderSimulationInput(2, "Trip 2")}
-								{renderSimulationInput(3, "Trip 3")}
-								{renderSimulationInput(4, "Trip 4")}	
+								{renderSimulationInput(0, "Trip 1")}
+								{renderSimulationInput(1, "Trip 2")}
+								{renderSimulationInput(2, "Trip 3")}
+								{renderSimulationInput(3, "Trip 4")}	
 								{renderSimulationInput(4, "Trip 5")}																					
 							</div>						
 						</div>
