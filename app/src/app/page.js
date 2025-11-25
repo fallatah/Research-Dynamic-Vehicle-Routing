@@ -89,6 +89,13 @@ export default function Home()
 		}
 	});
 
+	
+
+	// Converts Long/Lat to Google Waypoints
+	const toWaypoint = ([lat, lng]) => ({
+		location: { latLng: { latitude: lat, longitude: lng } }
+	});
+
 
 
 	// Google Map Setup
@@ -241,13 +248,13 @@ export default function Home()
 	( 
 		<div className="flex items-center gap-2 pb-2">
 			<div className="pe-4 whitespace-nowrap">{label}:</div>
-			<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-violet-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, true)}>
+			<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-violet-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, false)}>
 				Proceed
 			</button>
 
 			{(id <= 3)
 			?
-				<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-rose-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, false)}>
+				<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-rose-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, true)}>
 					Traffic
 				</button>
 			:
@@ -416,20 +423,16 @@ export default function Home()
 			alert("❌ Invalid Latitude/Longitude Values");
 		}
 		else {
-			getOptimizedRouteUsingHTTPs();
+			getFullPathUsingHTTPS();
 		}
 	}	
 
 
 
-	// Get optimized rout using HTTPs
-	async function getOptimizedRouteUsingHTTPs()
+	// Get optimized rout using HTTPS
+	async function getFullPathUsingHTTPS()
 	{
 		setIsLoading(true);
-
-		const toWaypoint = ([lat, lng]) => ({
-			location: { latLng: { latitude: lat, longitude: lng } }
-		});
 
 		let intermediates = [];
 		let unorderedDestinations = [];
@@ -486,9 +489,46 @@ export default function Home()
 	};
 
 
+	// Get optimized rout using HTTPS
+	async function getPartialPathUsingHTTP(start, intermediates, end)
+	{
+		const body = {
+			origin: start,
+			destination: end,
+			intermediates: intermediates,
+			travelMode: "DRIVE",
+			// routingPreference: "TRAFFIC_AWARE",
+			languageCode: "en-US",
+			units: "METRIC",
+			optimizeWaypointOrder:"true"
+		};
+
+		const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",
+		{
+			method: "POST",
+			headers: {
+			"Content-Type": "application/json",
+			"X-Goog-Api-Key": process.env.NEXT_PUBLIC_MAP_API_KEY,
+			"X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline,routes.optimizedIntermediateWaypointIndex"
+			},
+			body: JSON.stringify(body)
+		});
+
+  		const data = await res.json();
+
+		if(data?.routes?.[0])
+		{
+			return data.routes[0];
+		}
+		else
+		{
+			return {};
+		}
+	};
+
 
 	// Simulate
-	const simulate = (id, foundTraffic) =>
+	async function simulate(id, foundTraffic)
 	{
 		if (!isValideManualPlanning()) {
 			alert("❌ You should plan manually first");
@@ -498,12 +538,14 @@ export default function Home()
 		}		
 		else
 		{
+			setIsLoading(true);
+
 			setIsSimulating(true);
 
 			//setSimulation(prev => ({...prev, step: prev.step+1}));
 
-
-
+			
+			
 			// reconstruct path based on steps
 			let newPath = { manual:[...simulation.path.manual], optimized:[...simulation.path.optimized], heuristic:[...simulation.path.heuristic]};
 			newPath.manual.push(manualPlan[id]);
@@ -514,7 +556,39 @@ export default function Home()
 			// if there is traffic, heuristic should find next nearest location
 			if(foundTraffic)
 			{
-				// find next nearest location using google
+				let start 				  = toWaypoint([depot.lat, depot.long]);
+				let end 				  = toWaypoint([depot.lat, depot.long]);
+				let intermediates 		  = [];
+				let remainingDistinations = optimizedPlan.filter(item => !newPath.heuristic.includes(item));
+
+				if(newPath.heuristic?.length > 0)
+				{
+					let key = newPath.heuristic?.[newPath.heuristic?.length -1];
+
+					start = toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]);
+				}
+
+				remainingDistinations.forEach(key =>
+				{
+					intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
+				});
+
+				let partialPath = await getPartialPathUsingHTTP(start, intermediates, end);
+
+				console.log("partialPath", partialPath)
+
+				// // find next nearest location using google
+				// let xxx = 0;
+				// for(var i=xxx+1; i<optimizedPlan?.length; i++)
+				// {
+				// 	console.log(optimizedPlan[i])
+				// }
+
+				// if(remainingDistinations.length > 0)
+				// {
+				// 	console.log("talk to google")
+				// }
+
 			}
 			else
 			{
@@ -540,11 +614,14 @@ export default function Home()
 			//setSimulation(prev => ({ ...prev, distance: newDistance }));
 			//setSimulation(prev => ({ ...prev, duration: newDuration }));
 			//setSimulation(prev => ({ ...prev, polyline: newPolyline }));
+			
+			setIsLoading(false);
 
-			console.log("id", id);
-			console.log("newPath", newPath)
-			console.log("manual", manualPlan);
-			console.log("optimized", optimizedPlan);
+			//console.log("id", id);
+			//console.log("newPath", newPath)
+			//console.log("manual", manualPlan);
+			//console.log("optimized", optimizedPlan);
+			console.log(newPath)
 		}
 	};
 
