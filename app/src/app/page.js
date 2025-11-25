@@ -835,14 +835,14 @@ export default function Home()
 				>
 					{(!isSimulating && manualPlanData?.polyline)
 					?
-						<Polyline path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
+						null//<Polyline path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
 					:
 						null
 					}
 
 					{(!isSimulating && OptimizedPlanData?.polyline)
 					?
-						<Polyline path={OptimizedPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
+						null//<Polyline path={OptimizedPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
 					:
 						null
 					}	
