@@ -12,9 +12,6 @@ import decodePolyline from "decode-google-map-polyline";
 
 export default function Home()
 {
-
-
-
 	// Loading Spinner
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSimulating, setIsSimulating] = useState(false);
