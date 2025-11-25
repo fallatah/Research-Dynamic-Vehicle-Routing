@@ -757,13 +757,13 @@ export default function Home()
 				<></>
 			}
 			
-			<div className="text-right">
-				<button onClick={() => { window.location.reload()}} className="bg-amber-500 text-white px-4 py-2 rounded cursor-pointer">
+			<div className="fixed z-50 right-8 top-8">
+				<button onClick={() => { window.location.reload()}} className="bg-white text-gray-500 px-4 py-2 rounded cursor-pointer">
 					Reset
 				</button>
 			</div>
 
-			<div className="w-full h-[390px]">
+			<div className="w-full h-[450px]">
 				<GoogleMap
 					id={"google-map-view"}
 					zoom={11}
