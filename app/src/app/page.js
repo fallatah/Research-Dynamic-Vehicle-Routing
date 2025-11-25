@@ -836,6 +836,10 @@ export default function Home()
 
 
 				<div className="flex flex-row gap-5 grow">
+
+
+
+
 					<div className="w-[25%] flex flex-col">
 						<div className="font-bold bg-amber-200 p-4">
 							Step 2: Manual Planning
@@ -938,24 +942,10 @@ export default function Home()
 
 
 
-					<div className="w-[25%] flex flex-col">
-						<div className="font-bold bg-amber-200 p-4">
-							Step 4: Simulation
-						</div>
-						<div className="bg-amber-100 p-4 grow">
-							{renderSimulationInput(0, "Trip 1")}
-							{renderSimulationInput(1, "Trip 2")}
-							{renderSimulationInput(2, "Trip 3")}
-							{renderSimulationInput(3, "Trip 4")}	
-							{renderSimulationInput(4, "Trip 5")}	
-						</div>						
-					</div>
-
-
 
 					<div className="w-[25%] flex flex-col">
 						<div className="font-bold bg-amber-200 p-4">
-							Step 5: Heuristic Planning
+							Step 4: Heuristic Planning
 						</div>
 						<div className="bg-amber-100 p-4 grow">
 							{renderPlanningInput(0, "Trip 1", "heuristic", true)}
@@ -997,7 +987,22 @@ export default function Home()
 					</div>	
 
 
-				
+					<div className="w-[25%] flex flex-col">
+						<div className="font-bold bg-amber-200 p-4">
+							Step 5: Simulation
+						</div>
+						<div className="bg-amber-100 p-4 grow">
+							{renderSimulationInput(0, "Trip 1")}
+							{renderSimulationInput(1, "Trip 2")}
+							{renderSimulationInput(2, "Trip 3")}
+							{renderSimulationInput(3, "Trip 4")}	
+							{renderSimulationInput(4, "Trip 5")}	
+						</div>						
+					</div>
+
+
+
+
 				</div>
 
 
