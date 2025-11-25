@@ -80,6 +80,12 @@ export default function Home()
 			manual:0.0,
 			optimized:0.0,
 			heuristic:0.0
+		},
+		polyline:
+		{
+			manual:[],
+			optimized:[],
+			heuristic:[]
 		}
 	});
 
@@ -482,7 +488,7 @@ export default function Home()
 
 
 	// Simulate
-	const simulate = (trip, shouldProceed) =>
+	const simulate = (id, foundTraffic) =>
 	{
 		if (!isValideManualPlanning()) {
 			alert("❌ You should plan manually first");
@@ -494,12 +500,51 @@ export default function Home()
 		{
 			setIsSimulating(true);
 
-			setSimulation(prev => ({...prev, step: prev.step+1}));
+			//setSimulation(prev => ({...prev, step: prev.step+1}));
 
+
+
+			// reconstruct path based on steps
+			let newPath = { manual:[...simulation.path.manual], optimized:[...simulation.path.optimized], heuristic:[...simulation.path.heuristic]};
+			newPath.manual.push(manualPlan[id]);
+			newPath.optimized.push(optimizedPlan[id]);
+
+
+
+			// if there is traffic, heuristic should find next nearest location
+			if(foundTraffic)
+			{
+				// find next nearest location using google
+			}
+			else
+			{
+				newPath.heuristic.push(optimizedPlan[id]);
+			}
+
+
+
+			// Calculate distance for each
+
+
+
+			// Calculate duration for each 
+
+
+
+			// Calculate polyline for each
+
+
+
+			// Update Values 
+			//setSimulation(prev => ({ ...prev, path: newPath }));
+			//setSimulation(prev => ({ ...prev, distance: newDistance }));
+			//setSimulation(prev => ({ ...prev, duration: newDuration }));
+			//setSimulation(prev => ({ ...prev, polyline: newPolyline }));
+
+			console.log("id", id);
+			console.log("newPath", newPath)
 			console.log("manual", manualPlan);
 			console.log("optimized", optimizedPlan);
-
-			// to do logic here
 		}
 	};
 
