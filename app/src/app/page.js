@@ -235,13 +235,13 @@ export default function Home()
 	( 
 		<div className="flex items-center gap-2 pb-2">
 			<div className="pe-4 whitespace-nowrap">{label}:</div>
-			<button className={`${(simulation.step > id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-violet-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, true)}>
+			<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-violet-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, true)}>
 				Proceed
 			</button>
 
 			{(id <= 3)
 			?
-				<button className={`${(simulation.step > id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-rose-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, false)}>
+				<button className={`${(simulation.step !== id) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} bg-rose-600 text-white px-2 py-2 rounded`} disabled={(simulation.step > id)} onClick={() => simulate(id, false)}>
 					Traffic
 				</button>
 			:
@@ -492,9 +492,14 @@ export default function Home()
 		}		
 		else
 		{
+			setIsSimulating(true);
+
 			setSimulation(prev => ({...prev, step: prev.step+1}));
 
-			setIsSimulating(true);
+			console.log("manual", manualPlan);
+			console.log("optimized", optimizedPlan);
+
+			// to do logic here
 		}
 	};
 
