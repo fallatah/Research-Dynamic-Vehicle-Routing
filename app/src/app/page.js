@@ -52,7 +52,7 @@ export default function Home()
 	const [manualPlanData, setManualPlanData] = useState({});
 
 
-	
+
 	// Optimized Plan
 	const [optimizedPlan, setOptimizedPlan] = useState([]);
 	const [OptimizedPlanData, setOptimizedPlanData] = useState({});
@@ -206,9 +206,15 @@ export default function Home()
 			<button className="bg-violet-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id, true)}>
 				Proceed
 			</button>
-			<button className="bg-rose-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id, false)}>
-				Traffic
-			</button>
+
+			{(id <= 3)
+			?
+				<button className="bg-rose-600 text-white px-2 py-2 rounded cursor-pointer" onClick={() => simulate(id, false)}>
+					Traffic
+				</button>
+			:
+				null
+			}
 		</div>
 	);
 
