@@ -18,6 +18,10 @@ export default function Home()
 
 
 
+	// Set Traffic Penelty
+	const trafficPenalty = 30;
+
+
 	// Set PSU to be Depot :)
 	const mapLat = 24.737513266445525;
 	const mapLong = 46.698268964794934;	
@@ -89,6 +93,12 @@ export default function Home()
 			manual:[],
 			optimized:[],
 			heuristic:[]
+		},
+		penalty:
+		{
+			manual:0.0,
+			optimized:0.0,
+			heuristic:0.0
 		}
 	});
 
@@ -441,7 +451,7 @@ export default function Home()
 
 			setIsLoading(true);
 
-			const route = await getPathFromGoogleAPI(start, intermediates, end);
+			const route = await getPathFromGoogleAPI(start, intermediates, end, true);
 
 			setIsLoading(false);
 
@@ -469,7 +479,7 @@ export default function Home()
 
 
 	// Get optimized rout from Google Route API
-	async function getPathFromGoogleAPI(start, intermediates, end)
+	async function getPathFromGoogleAPI(start, intermediates, end, optimizeWaypointOrder=true)
 	{
 		const body = {
 			origin: start,
@@ -479,7 +489,7 @@ export default function Home()
 			// routingPreference: "TRAFFIC_AWARE",
 			languageCode: "en-US",
 			units: "METRIC",
-			optimizeWaypointOrder:"true"
+			optimizeWaypointOrder:(optimizeWaypointOrder) ? "true" : "false"
 		};
 
 		const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes",
@@ -564,7 +574,7 @@ export default function Home()
 					intermediates?.shift();
 					remainingDistinations?.shift();
 
-					let newRoute = await getPathFromGoogleAPI(start, intermediates, end);
+					let newRoute = await getPathFromGoogleAPI(start, intermediates, end, true);
 					
 					let newOrder = newRoute.optimizedIntermediateWaypointIndex?.map(i => remainingDistinations?.[i]);
 
@@ -597,7 +607,7 @@ export default function Home()
 						intermediates.push(toWaypoint([destinations?.[key]?.lat, destinations?.[key]?.long]));
 					});
 
-					let newRoute = await getPathFromGoogleAPI(start, intermediates, end);
+					let newRoute = await getPathFromGoogleAPI(start, intermediates, end, true);
 					
 					let newOrder = newRoute.optimizedIntermediateWaypointIndex?.map(i => remainingDistinations?.[i]);
 
@@ -619,12 +629,19 @@ export default function Home()
 			let newDistance = { manual:0.0, optimized:0.0, heuristic:0.0};
 			let newDuration = { manual:0.0, optimized:0.0, heuristic:0.0};
 			let newPolyline = { manual:[], optimized:[], heuristic:[]};
+			let newPenalty  = { manual:0.0, optimized:0.0, heuristic:0.0};
 
 			if(newPath?.manual?.length > 0)
 			{
 				let start 		  = toWaypoint([depot.lat, depot.long]);
-				let end   		  = toWaypoint([destinations[newPath?.manual[newPath?.manual?.length-1]]?.lat, destinations[newPath?.manual[newPath?.manual?.length-1]]?.long]);
+				let end   		  = (id === 4) ? toWaypoint([depot.lat, depot.long]) : toWaypoint([destinations[newPath?.manual[newPath?.manual?.length-1]]?.lat, destinations[newPath?.manual[newPath?.manual?.length-1]]?.long]);
 				let intermediates = [];
+				let penalty = 0;
+
+				if(foundTraffic)
+				{
+					penalty = trafficPenalty;
+				}
 
 				newPath?.manual.forEach(key =>
 				{
@@ -633,18 +650,25 @@ export default function Home()
 
 				intermediates.pop();
 
-				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end);
+				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end, false);
 
 				newDistance.manual = actualRoute?.distanceMeters * 0.001;
-				newDuration.manual = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60);
-				newPolyline.manual = decodePolyline(actualRoute.polyline.encodedPolyline);					
+				newDuration.manual = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60) + penalty + simulation?.penalty?.manual;
+				newPolyline.manual = decodePolyline(actualRoute.polyline.encodedPolyline);	
+				newPenalty.manual  = penalty + simulation?.penalty?.manual;
 			}
 
 			if(newPath?.optimized?.length > 0)
 			{
 				let start 		  = toWaypoint([depot.lat, depot.long]);
-				let end   		  = toWaypoint([destinations[newPath?.optimized[newPath?.optimized?.length-1]]?.lat, destinations[newPath?.optimized[newPath?.optimized?.length-1]]?.long]);
+				let end   		  = (id === 4) ? toWaypoint([depot.lat, depot.long]) : toWaypoint([destinations[newPath?.optimized[newPath?.optimized?.length-1]]?.lat, destinations[newPath?.optimized[newPath?.optimized?.length-1]]?.long]);
 				let intermediates = [];
+				let penalty = 0;
+
+				if(foundTraffic)
+				{
+					penalty = trafficPenalty;
+				}
 
 				newPath?.optimized.forEach(key =>
 				{
@@ -653,17 +677,20 @@ export default function Home()
 
 				intermediates.pop();
 
-				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end);
+
+				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end, false);
+
 
 				newDistance.optimized = actualRoute?.distanceMeters * 0.001;
-				newDuration.optimized = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60);
-				newPolyline.optimized = decodePolyline(actualRoute.polyline.encodedPolyline);					
+				newDuration.optimized = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60)  + penalty + simulation?.penalty?.optimized;
+				newPolyline.optimized = decodePolyline(actualRoute.polyline.encodedPolyline);			
+				newPenalty.optimized  = penalty + simulation?.penalty?.optimized;		
 			}
 
 			if(newPath?.heuristic?.length > 0)
 			{
 				let start 		  = toWaypoint([depot.lat, depot.long]);
-				let end   		  = toWaypoint([destinations[newPath?.heuristic[newPath?.heuristic?.length-1]]?.lat, destinations[newPath?.heuristic[newPath?.heuristic?.length-1]]?.long]);
+				let end   		  = (id === 4) ? toWaypoint([depot.lat, depot.long]) : toWaypoint([destinations[newPath?.heuristic[newPath?.heuristic?.length-1]]?.lat, destinations[newPath?.heuristic[newPath?.heuristic?.length-1]]?.long]);
 				let intermediates = [];
 
 				newPath?.heuristic.forEach(key =>
@@ -673,7 +700,7 @@ export default function Home()
 
 				intermediates.pop();
 
-				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end);
+				let actualRoute = await getPathFromGoogleAPI(start, intermediates, end, false);
 
 				newDistance.heuristic = actualRoute?.distanceMeters * 0.001;
 				newDuration.heuristic = Math.floor(parseInt(actualRoute?.duration?.replace("s", ""), 10)/60);
@@ -688,7 +715,7 @@ export default function Home()
 			setSimulation(prev => ({ ...prev, distance: newDistance }));
 			setSimulation(prev => ({ ...prev, duration: newDuration }));
 			setSimulation(prev => ({ ...prev, polyline: newPolyline }));
-			
+			setSimulation(prev => ({ ...prev, penalty: newPenalty }));
 
 
 			setIsLoading(false);
