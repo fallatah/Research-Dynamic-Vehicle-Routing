@@ -7,8 +7,6 @@ import decodePolyline from "decode-google-map-polyline";
 
 export default function Home()
 {
-	let MapKey = Math.random();
-
 	// Loading Spinner
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSimulating, setIsSimulating] = useState(false);
@@ -104,7 +102,7 @@ export default function Home()
 
 
 	// polylines on the map
-	const [polylineVisibility, setPolylineVisibility] = useState({ manualPlan: true, manualActual: true, optimizedPlan: true, optimizedActual: true, heuristicPlan: true, huristicActual: true });
+	const [polylineVisibility, setPolylineVisibility] = useState({ manualPlan: true, manualActual: true, optimizedPlan: true, optimizedActual: true, heuristicPlan: true, heuristicActual: true });
 
 
 
@@ -155,13 +153,58 @@ export default function Home()
 
 	const hideShowPolyline = (key) =>
 	{
-		let temp = {...polylineVisibility}
+		let tempVisibility = {...polylineVisibility}
 
-		temp[key] = !polylineVisibility[key];
+		tempVisibility[key] = !polylineVisibility[key];
 		
-		setPolylineVisibility(temp);
+		setPolylineVisibility(tempVisibility);
 
-		console.log(polylineVisibility?.manualPlan)
+		if(key === "manualPlan")
+		{
+			let tempData = [...manualPlanData?.polyline]
+	
+			setManualPlanData(prev => ({ ...prev, ["polyline"]: [] }));
+	
+			setTimeout(() =>
+			{
+				setManualPlanData(prev => ({ ...prev, ["polyline"]: tempData }));
+			}, 0);
+		}
+		else if(key === "optimizedPlan")
+		{
+			let tempData = [...OptimizedPlanData?.polyline]
+	
+			setOptimizedPlanData(prev => ({ ...prev, ["polyline"]: [] }));
+	
+			setTimeout(() =>
+			{
+				setOptimizedPlanData(prev => ({ ...prev, ["polyline"]: tempData }));
+			}, 0);
+		}
+		else if(key === "heuristicPlan")
+		{
+			let tempData = [...heuristicPlanData?.polyline]
+	
+			setHeuristicPlanData(prev => ({ ...prev, ["polyline"]: [] }));
+	
+			setTimeout(() =>
+			{
+				setHeuristicPlanData(prev => ({ ...prev, ["polyline"]: tempData }));
+			}, 0);
+		}
+		else if(key === "manualActual" || key === "optimizedActual" || key === "heuristicActual")
+		{
+			const newKey = key?.replace("Actual", "");
+
+			let tempData = [...simulation?.polyline?.[newKey]]
+	
+			setSimulation(prev => ({...prev, polyline: {...prev.polyline, [newKey]: [] } }));
+
+			setTimeout(() =>
+			{
+				setSimulation(prev => ({...prev, polyline: {...prev.polyline, [newKey]: tempData } }));
+			}, 0);
+		}
 	}
 
 
@@ -619,7 +662,7 @@ export default function Home()
 
 
 
-			// Calculate distance, duration & polyline for manual, optimized & huristic
+			// Calculate distance, duration & polyline for manual, optimized & heuristic
 			let newDistance = { manual:0.0, optimized:0.0, heuristic:0.0};
 			let newDuration = { manual:0.0, optimized:0.0, heuristic:0.0};
 			let newPolyline = { manual:[], optimized:[], heuristic:[]};
@@ -847,7 +890,7 @@ export default function Home()
 				<label><input checked={polylineVisibility?.optimizedPlan} type="checkbox" name="optimizedPlan" id="optimizedPlan" className="mr-2" onChange={() => hideShowPolyline("optimizedPlan")}/>Optimized Planned</label>
 				<label><input checked={polylineVisibility?.optimizedActual} type="checkbox" name="optimizedActual" id="optimizedActual" className="mr-2" onChange={() => hideShowPolyline("optimizedActual")}/>Optimized Actual</label>
 				<label><input checked={polylineVisibility?.heuristicPlan} type="checkbox" name="heuristicPlan" id="heuristicPlan" className="mr-2" onChange={() => hideShowPolyline("heuristicPlan")}/>Heuristic Planned</label>
-				<label><input checked={polylineVisibility?.huristicActual} type="checkbox" name="huristicActual" id="huristicActual" className="mr-2" onChange={() => hideShowPolyline("huristicActual")}/>Huristic Actual</label>
+				<label><input checked={polylineVisibility?.heuristicActual} type="checkbox" name="heuristicActual" id="heuristicActual" className="mr-2" onChange={() => hideShowPolyline("heuristicActual")}/>Heuristic Actual</label>
 			</div>
 
 			<div className="w-full h-[430px]">
@@ -859,38 +902,29 @@ export default function Home()
 					mapContainerStyle={{ width: '100%', height: '100%' }}
 					center={{ lat: parseFloat(mapLat), lng: parseFloat(mapLong) }}
 				>
-					{polylineVisibility?.manualPlan && !isSimulating && manualPlanData?.polyline && (
-						<Polyline path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
+					{polylineVisibility?.heuristicPlan && (
+						<Polyline key={"heuristicPlan"} path={heuristicPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#ff0000",strokeColor: "#ff0000"}}}/>
+					)}					
+
+					{polylineVisibility?.heuristicActual && (
+						<Polyline key={"heuristicActual"} path={simulation?.polyline?.heuristic} options={{...polylineOptions, ...{fillColor: "#ff0000",strokeColor: "#ff0000"}}}/>
 					)}
 
-					{(polylineVisibility?.optimizedPlan && !isSimulating && OptimizedPlanData?.polyline)
-					?
-						<Polyline path={OptimizedPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
-					:
-						null
-					}	
+					{polylineVisibility?.optimizedPlan && (
+						<Polyline key={"optimizedPlan"} path={OptimizedPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
+					)}
 
+					{polylineVisibility?.optimizedActual && (
+						<Polyline key={"optimizedActual"} path={simulation?.polyline?.optimized} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
+					)}								
+
+					{polylineVisibility?.manualPlan && (
+						<Polyline key={"manualPlan"} path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
+					)}
 					
-					{(polylineVisibility?.manualActual && isSimulating && simulation?.polyline?.manual)
-					?
-						<Polyline path={simulation?.polyline?.manual} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
-					:
-						null
-					}
-
-					{(polylineVisibility?.optimizedActual && isSimulating && simulation?.polyline?.optimized)
-					?
-						<Polyline path={simulation?.polyline?.optimized} options={{...polylineOptions, ...{fillColor: "#0000ff",strokeColor: "#0000ff"}}}/>
-					:
-						null
-					}								
-
-					{(polylineVisibility?.huristicActual && isSimulating && simulation?.polyline?.heuristic)
-					?
-						<Polyline path={simulation?.polyline?.heuristic} options={{...polylineOptions, ...{fillColor: "#ff0000",strokeColor: "#ff0000"}}}/>
-					:
-						null
-					}	
+					{polylineVisibility?.manualActual && (
+						<Polyline key={"manualActual"} path={simulation?.polyline?.manual} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
+					)}
 
 					<Marker key={"point_depot"}
 					>
@@ -1229,8 +1263,6 @@ export default function Home()
 
 
 				</div>
-
-
 			</div>
 		</div>
 	) : (<></>);
