@@ -12,6 +12,11 @@ export default function Home()
 	const [isSimulating, setIsSimulating] = useState(false);
 
 
+	// Set Cost Per KM (e.g., Fuel + Maintenance)
+	const costPerKm = 0.80;   
+
+	// Set Cost Per Minute (// e.g., Driver Wage + Late Fees)
+	const costPerMin = 0.50;
 
 	// Set Traffic Penelty
 	const trafficPenalty = 30;
@@ -663,10 +668,13 @@ export default function Home()
 
 
 			// Calculate distance, duration & polyline for manual, optimized & heuristic
-			let newDistance = { manual:0.0, optimized:0.0, heuristic:0.0};
-			let newDuration = { manual:0.0, optimized:0.0, heuristic:0.0};
-			let newPolyline = { manual:[], optimized:[], heuristic:[]};
-			let newPenalty  = { manual:0.0, optimized:0.0, heuristic:0.0};
+			let newDistance 	= { manual:0.0, optimized:0.0, heuristic:0.0 };
+			let newDuration 	= { manual:0.0, optimized:0.0, heuristic:0.0 };
+			let newPolyline 	= { manual:[], optimized:[], heuristic:[] };
+			let newPenalty  	= { manual:0.0, optimized:0.0, heuristic:0.0 };
+			let newCost 		= { manual:0.0, optimized:0.0, heuristic:0.0 };
+			let newCostDistance = { manual:0.0, optimized:0.0, heuristic:0.0 };
+			let newCostTime 	= { manual:0.0, optimized:0.0, heuristic:0.0 };
 
 			if(newPath?.manual?.length > 0)
 			{
@@ -746,6 +754,27 @@ export default function Home()
 
 			
 
+			// Calculate Cost
+			let tempCost = {};
+
+			tempCost 				  = calculateTotalCost(newDistance?.manual, newDuration?.manual);
+			newCost["manual"]	      = tempCost?.total;
+			newCostDistance["manual"] = tempCost?.distnace;
+			newCostTime["manual"] 	  = tempCost?.time;
+			
+
+			tempCost 				  	  = calculateTotalCost(newDistance?.optimized, newDuration?.optimized);
+			newCost["optimized"]	      = tempCost?.total;
+			newCostDistance["optimized"]  = tempCost?.distnace;
+			newCostTime["optimized"] 	  = tempCost?.time;
+
+			tempCost 				  	  = calculateTotalCost(newDistance?.heuristic, newDuration?.heuristic);
+			newCost["heuristic"]	      = tempCost?.total;
+			newCostDistance["heuristic"]  = tempCost?.distnace;
+			newCostTime["heuristic"] 	  = tempCost?.time;	
+			
+			
+
 
 			// Update Values 
 			setSimulation(prev => ({ ...prev, path: newPath }));
@@ -753,6 +782,9 @@ export default function Home()
 			setSimulation(prev => ({ ...prev, duration: newDuration }));
 			setSimulation(prev => ({ ...prev, polyline: newPolyline }));
 			setSimulation(prev => ({ ...prev, penalty: newPenalty }));
+			setSimulation(prev => ({ ...prev, cost: newCost }));
+			setSimulation(prev => ({ ...prev, costDistance: newCostDistance }));
+			setSimulation(prev => ({ ...prev, costTime: newCostTime }));
 
 
 			setIsLoading(false);
@@ -865,6 +897,25 @@ export default function Home()
 
 
 
+	// Helper: Calculate Efficiency Score (Lower is Better)
+	const calculateTotalCost = (distanceKm, durationMin) =>
+	{
+		const distCost = distanceKm * costPerKm;
+		const timeCost = durationMin * costPerMin;
+		const totalCost = distCost + timeCost;
+
+		const cost =
+		{
+			total: totalCost.toFixed(2),
+			distnace: distCost.toFixed(2),
+			time: timeCost.toFixed(2)
+		};
+
+		return cost;
+	};	
+
+
+
 	// Render FULL HTML
 	return isLoaded ? (
 		<div className="flex flex-col gap-5 p-5">
@@ -921,7 +972,7 @@ export default function Home()
 					{polylineVisibility?.manualPlan && (
 						<Polyline key={"manualPlan"} path={manualPlanData?.polyline} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
 					)}
-					
+
 					{polylineVisibility?.manualActual && (
 						<Polyline key={"manualActual"} path={simulation?.polyline?.manual} options={{...polylineOptions, ...{fillColor: "#53A000",strokeColor: "#53A000"}}}/>
 					)}
@@ -1050,7 +1101,21 @@ export default function Home()
 									</div>									
 								:
 									null
-								}							
+								}	
+
+								{(simulation?.cost?.manual) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Cost (SAR):</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.cost?.manual*100)/100}
+											disabled={true}
+										/>	
+									</div>									
+								:
+									null
+								}														
 							</div>
 						:
 							null
@@ -1144,7 +1209,21 @@ export default function Home()
 									</div>									
 								:
 									null
-								}														
+								}	
+
+								{(simulation?.cost?.optimized) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Cost (SAR):</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.cost?.optimized*100)/100}
+											disabled={true}
+										/>	
+									</div>									
+								:
+									null
+								}																					
 							</div>
 						:
 							null
@@ -1239,6 +1318,20 @@ export default function Home()
 								:
 									null
 								}
+
+								{(simulation?.cost?.heuristic) ? 
+									<div className="flex items-center gap-2 pb-2">
+										<div className="whitespace-nowrap w-20">Cost (SAR):</div>
+										<input
+											type="text"
+											className="bg-white rounded p-2 border grow opacity-50 w-12"
+											value={Math.round(simulation?.cost?.heuristic*100)/100}
+											disabled={true}
+										/>	
+									</div>									
+								:
+									null
+								}								
 							</div>
 						:
 							null
